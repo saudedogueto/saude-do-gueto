@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "SaudeDoGueto",
+    "slug": "saude-do-gueto",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {},
+    "newArchEnabled": true,
+    "scheme": "saudedogueto",
+    "extra": {
+      "eas": {
+        "projectId": "f4644629-b0ff-4467-95d1-3c4b7cd5c1ee"
+      }
+    }
+  }
+}
+
+
