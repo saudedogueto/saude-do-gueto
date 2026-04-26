@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
-  Alert, Switch, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard
+  Alert, Switch, ScrollView, TouchableOpacity, Platform, Keyboard
 } from 'react-native';
-import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
+import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router, useLocalSearchParams } from 'expo-router';
 
@@ -33,7 +33,7 @@ export default function CadastroScreen() {
       Alert.alert('Atenção', 'Nome do paciente é obrigatório');
       return;
     }
-
+    Keyboard.dismiss();
     setSalvando(true);
     try {
       await salvarPaciente({
@@ -63,17 +63,23 @@ export default function CadastroScreen() {
     }
   };
 
+  const scrollToEnd = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: cores.fundo }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={{ flex: 1, backgroundColor: cores.fundo }}>
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.container, { backgroundColor: cores.fundo }]}
-        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={true}
+        bounces={true}
+        overScrollMode="always"
+        scrollEnabled={true}
         nestedScrollEnabled={true}
       >
         <Text style={styles.title}>
@@ -87,6 +93,7 @@ export default function CadastroScreen() {
           placeholderTextColor={cores.placeholder}
           value={nome}
           onChangeText={setNome}
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.label}>Data de nascimento</Text>
@@ -96,6 +103,7 @@ export default function CadastroScreen() {
           placeholderTextColor={cores.placeholder}
           value={dataNascimento}
           onChangeText={setDataNascimento}
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.label}>Cartão SUS</Text>
@@ -106,6 +114,7 @@ export default function CadastroScreen() {
           value={cartaoSUS}
           onChangeText={setCartaoSUS}
           keyboardType="numeric"
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.label}>Telefone</Text>
@@ -116,6 +125,7 @@ export default function CadastroScreen() {
           value={telefone}
           onChangeText={setTelefone}
           keyboardType="phone-pad"
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.label}>Endereço</Text>
@@ -125,6 +135,7 @@ export default function CadastroScreen() {
           placeholderTextColor={cores.placeholder}
           value={endereco}
           onChangeText={setEndereco}
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.label}>Microárea</Text>
@@ -134,6 +145,7 @@ export default function CadastroScreen() {
           placeholderTextColor={cores.placeholder}
           value={microarea}
           onChangeText={setMicroarea}
+          onFocus={scrollToEnd}
         />
 
         <Text style={styles.sectionTitle}>Condições de Saúde</Text>
@@ -177,6 +189,7 @@ export default function CadastroScreen() {
           onChangeText={setObservacoes}
           multiline
           textAlignVertical="top"
+          onFocus={scrollToEnd}
         />
 
         <TouchableOpacity
@@ -189,17 +202,16 @@ export default function CadastroScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Espaço extra no final pra garantir que o botão não fique escondido */}
-        <View style={{ height: 60 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 22,
