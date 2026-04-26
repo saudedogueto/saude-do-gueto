@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  View, Text, TextInput, Button, StyleSheet,
-  Alert, Switch, ScrollView, TouchableOpacity, Platform
+  View, Text, TextInput, StyleSheet,
+  Alert, Switch, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard
 } from 'react-native';
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
@@ -12,6 +12,7 @@ export default function CadastroScreen() {
   const { salvarPaciente, buscarPaciente } = usePacientes();
   const { cores } = useTema();
   const editando = !!params?.id;
+  const scrollRef = useRef<ScrollView>(null);
 
   const pacienteExistente = params?.id ? buscarPaciente(params.id as string) : null;
 
@@ -63,122 +64,142 @@ export default function CadastroScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: cores.fundo }]}>
-      <Text style={styles.title}>
-        {editando ? '✏️ Editar Paciente' : '📝 Novo Paciente'}
-      </Text>
-
-      <Text style={styles.label}>Nome completo *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nome do paciente"
-        value={nome}
-        onChangeText={setNome}
-      />
-
-      <Text style={styles.label}>Data de nascimento</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="DD/MM/AAAA"
-        value={dataNascimento}
-        onChangeText={setDataNascimento}
-      />
-
-      <Text style={styles.label}>Cartão SUS</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Número do cartão SUS"
-        value={cartaoSUS}
-        onChangeText={setCartaoSUS}
-        keyboardType="numeric"
-      />
-
-      <Text style={styles.label}>Telefone</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="(11) 99999-9999"
-        value={telefone}
-        onChangeText={setTelefone}
-        keyboardType="phone-pad"
-      />
-
-      <Text style={styles.label}>Endereço</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Rua, número, bairro"
-        value={endereco}
-        onChangeText={setEndereco}
-      />
-
-      <Text style={styles.label}>Microárea</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex: Área 1, Micro 3"
-        value={microarea}
-        onChangeText={setMicroarea}
-      />
-
-      <Text style={styles.sectionTitle}>Condições de Saúde</Text>
-
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Hipertensão</Text>
-        <Switch
-          value={hipertensao}
-          onValueChange={setHipertensao}
-          trackColor={{ false: '#DDD', true: '#FFA500' }}
-          thumbColor={hipertensao ? '#FF8C00' : '#f4f3f4'}
-        />
-      </View>
-
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Diabetes</Text>
-        <Switch
-          value={diabetes}
-          onValueChange={setDiabetes}
-          trackColor={{ false: '#DDD', true: '#FFA500' }}
-          thumbColor={diabetes ? '#FF8C00' : '#f4f3f4'}
-        />
-      </View>
-
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Gestante</Text>
-        <Switch
-          value={gestante}
-          onValueChange={setGestante}
-          trackColor={{ false: '#DDD', true: '#FFA500' }}
-          thumbColor={gestante ? '#FF8C00' : '#f4f3f4'}
-        />
-      </View>
-
-      <Text style={styles.label}>Observações</Text>
-      <TextInput
-        style={[styles.input, styles.observacoes]}
-        placeholder="Anotações relevantes sobre o paciente..."
-        value={observacoes}
-        onChangeText={setObservacoes}
-        multiline
-        textAlignVertical="top"
-      />
-
-      <TouchableOpacity
-        style={[styles.button, salvando && styles.buttonDisabled]}
-        onPress={handleSalvar}
-        disabled={salvando}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: cores.fundo }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[styles.container, { backgroundColor: cores.fundo }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
+        nestedScrollEnabled={true}
       >
-        <Text style={styles.buttonText}>
-          {salvando ? 'Salvando...' : editando ? 'Atualizar Paciente' : 'Cadastrar Paciente'}
+        <Text style={styles.title}>
+          {editando ? '✏️ Editar Paciente' : '📝 Novo Paciente'}
         </Text>
-      </TouchableOpacity>
-    </ScrollView>
+
+        <Text style={styles.label}>Nome completo *</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Nome do paciente"
+          placeholderTextColor={cores.placeholder}
+          value={nome}
+          onChangeText={setNome}
+        />
+
+        <Text style={styles.label}>Data de nascimento</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="DD/MM/AAAA"
+          placeholderTextColor={cores.placeholder}
+          value={dataNascimento}
+          onChangeText={setDataNascimento}
+        />
+
+        <Text style={styles.label}>Cartão SUS</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Número do cartão SUS"
+          placeholderTextColor={cores.placeholder}
+          value={cartaoSUS}
+          onChangeText={setCartaoSUS}
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Telefone</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="(11) 99999-9999"
+          placeholderTextColor={cores.placeholder}
+          value={telefone}
+          onChangeText={setTelefone}
+          keyboardType="phone-pad"
+        />
+
+        <Text style={styles.label}>Endereço</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Rua, número, bairro"
+          placeholderTextColor={cores.placeholder}
+          value={endereco}
+          onChangeText={setEndereco}
+        />
+
+        <Text style={styles.label}>Microárea</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Ex: Área 1, Micro 3"
+          placeholderTextColor={cores.placeholder}
+          value={microarea}
+          onChangeText={setMicroarea}
+        />
+
+        <Text style={styles.sectionTitle}>Condições de Saúde</Text>
+
+        <View style={[styles.switchRow, { backgroundColor: cores.inputBg, borderColor: cores.borda }]}>
+          <Text style={[styles.switchLabel, { color: cores.texto }]}>Hipertensão</Text>
+          <Switch
+            value={hipertensao}
+            onValueChange={setHipertensao}
+            trackColor={{ false: '#DDD', true: '#FFA500' }}
+            thumbColor={hipertensao ? '#FF8C00' : '#f4f3f4'}
+          />
+        </View>
+
+        <View style={[styles.switchRow, { backgroundColor: cores.inputBg, borderColor: cores.borda }]}>
+          <Text style={[styles.switchLabel, { color: cores.texto }]}>Diabetes</Text>
+          <Switch
+            value={diabetes}
+            onValueChange={setDiabetes}
+            trackColor={{ false: '#DDD', true: '#FFA500' }}
+            thumbColor={diabetes ? '#FF8C00' : '#f4f3f4'}
+          />
+        </View>
+
+        <View style={[styles.switchRow, { backgroundColor: cores.inputBg, borderColor: cores.borda }]}>
+          <Text style={[styles.switchLabel, { color: cores.texto }]}>Gestante</Text>
+          <Switch
+            value={gestante}
+            onValueChange={setGestante}
+            trackColor={{ false: '#DDD', true: '#FFA500' }}
+            thumbColor={gestante ? '#FF8C00' : '#f4f3f4'}
+          />
+        </View>
+
+        <Text style={styles.label}>Observações</Text>
+        <TextInput
+          style={[styles.input, styles.observacoes, { backgroundColor: cores.inputBg, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Anotações relevantes sobre o paciente..."
+          placeholderTextColor={cores.placeholder}
+          value={observacoes}
+          onChangeText={setObservacoes}
+          multiline
+          textAlignVertical="top"
+        />
+
+        <TouchableOpacity
+          style={[styles.button, salvando && styles.buttonDisabled]}
+          onPress={handleSalvar}
+          disabled={salvando}
+        >
+          <Text style={styles.buttonText}>
+            {salvando ? 'Salvando...' : editando ? 'Atualizar Paciente' : 'Cadastrar Paciente'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Espaço extra no final pra garantir que o botão não fique escondido */}
+        <View style={{ height: 60 }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#FAFAFA',
+    paddingBottom: 20,
   },
   title: {
     fontSize: 22,
