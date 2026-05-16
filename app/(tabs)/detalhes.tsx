@@ -136,7 +136,7 @@ export default function DetalhesScreen() {
           ['Data de Nasc.', paciente.dataNascimento || '---'],
           ['Telefone', paciente.telefone || '---'],
           ['Endereço', paciente.endereco || '---'],
-          ['Microárea', paciente.microarea || '---'],
+          ['Microárea / Prontuário', paciente.microareaProntuario || paciente.microarea || '---'],
           ['Cadastrado em', paciente.dataCadastro],
           ['Última visita', paciente.ultimaVisita || 'Nenhuma'],
         ].map(([label, value]) => (
@@ -371,7 +371,7 @@ export default function DetalhesScreen() {
       <View style={styles.header}>
         {renderFoto()}
         <Text style={styles.nome}>{paciente.nome}</Text>
-        {paciente.microarea && <Text style={styles.microarea}>📍 {paciente.microarea}</Text>}
+        {(paciente.microareaProntuario || paciente.microarea) && <Text style={styles.microarea}>📍 {paciente.microareaProntuario || paciente.microarea}</Text>}
       </View>
 
       {renderAbas()}

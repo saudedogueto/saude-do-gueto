@@ -69,7 +69,7 @@ export default function CadastroScreen() {
   const [vacinacaoDia, setVacinacaoDia] = useState(p?.vacinacaoDia || false);
   const [aleitamentoBebe, setAleitamentoBebe] = useState(p?.aleitamentoBebe || '');
 
-  const [prontuario, setProntuario] = useState(p?.prontuario || '');
+  const [microareaProntuario, setMicroareaProntuario] = useState(p?.microareaProntuario || p?.prontuario || '');
 
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
@@ -166,13 +166,13 @@ export default function CadastroScreen() {
         cartaoSUS: cartaoSUS.trim(),
         telefone: telefone.trim(),
         endereco: enderecoCompleto || endereco.trim(),
-        microarea: microarea.trim(),
+        microareaProntuario: microareaProntuario.trim(),
         hipertensao,
         diabetes,
         gestante,
         observacoes: observacoes.trim(),
         foto: fotoUri,
-        prontuario: prontuario.trim(),
+
         // Gestante 🤰
         idadeGestacional: gestante ? idadeGestacional : undefined,
         consultasPreNatal: gestante ? consultasPreNatal : undefined,
@@ -346,13 +346,13 @@ export default function CadastroScreen() {
           onFocus={scrollToEnd}
         />
 
-        <Text style={[styles.label, { color: cores.texto }]}>Prontuário</Text>
+        <Text style={[styles.label, { color: cores.texto }]}>Microárea / Prontuário</Text>
         <TextInput
           style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
-          placeholder="Nº do prontuário"
+          placeholder="Ex: Área 1, Micro 3 — 12345"
           placeholderTextColor={placeholderCor(cores, isEscuro)}
-          value={prontuario}
-          onChangeText={setProntuario}
+          value={microareaProntuario}
+          onChangeText={setMicroareaProntuario}
           onFocus={scrollToEnd}
         />
 

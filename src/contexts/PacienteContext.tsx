@@ -14,6 +14,7 @@ export type Paciente = {
   observacoes: string;
   endereco?: string;
   microarea?: string;
+  microareaProntuario?: string;
   foto?: string;
   dataCadastro: string;
   ultimaVisita?: string;
