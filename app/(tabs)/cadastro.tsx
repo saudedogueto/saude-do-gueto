@@ -8,7 +8,6 @@ import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import {
   mascaraCPF,
   mascaraTelefone,
@@ -70,10 +69,7 @@ export default function CadastroScreen() {
   const [vacinacaoDia, setVacinacaoDia] = useState(p?.vacinacaoDia || false);
   const [aleitamentoBebe, setAleitamentoBebe] = useState(p?.aleitamentoBebe || '');
 
-  // Geolocalização 🗺️
-  const [latitude, setLatitude] = useState<number | undefined>(p?.latitude);
-  const [longitude, setLongitude] = useState<number | undefined>(p?.longitude);
-  const [localizando, setLocalizando] = useState(false);
+  const [prontuario, setProntuario] = useState(p?.prontuario || '');
 
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
@@ -176,8 +172,7 @@ export default function CadastroScreen() {
         gestante,
         observacoes: observacoes.trim(),
         foto: fotoUri,
-        latitude,
-        longitude,
+        prontuario: prontuario.trim(),
         // Gestante 🤰
         idadeGestacional: gestante ? idadeGestacional : undefined,
         consultasPreNatal: gestante ? consultasPreNatal : undefined,
@@ -200,26 +195,6 @@ export default function CadastroScreen() {
       setSalvando(false);
     }
   };
-
-  // Geolocalização 🗺️
-  const handleMarcarLocalizacao = useCallback(async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Precisamos da localização para marcar o endereço.');
-      return;
-    }
-    setLocalizando(true);
-    try {
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      setLatitude(loc.coords.latitude);
-      setLongitude(loc.coords.longitude);
-      Alert.alert('📍 Localização salva!', 'Endereço do paciente marcado com sucesso.');
-    } catch {
-      Alert.alert('Erro', 'Não foi possível obter a localização. Tente novamente.');
-    } finally {
-      setLocalizando(false);
-    }
-  }, []);
 
   const scrollToEnd = () => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
@@ -371,25 +346,15 @@ export default function CadastroScreen() {
           onFocus={scrollToEnd}
         />
 
-        {/* Geolocalização 🗺️ */}
-        <TouchableOpacity
-          style={[
-            styles.localizacaoBtn,
-            {
-              backgroundColor: latitude ? '#43A047' : cores.input,
-              borderColor: latitude ? '#43A047' : cores.borda,
-            }
-          ]}
-          onPress={handleMarcarLocalizacao}
-          disabled={localizando}
-        >
-          <Text style={[
-            styles.localizacaoBtnText,
-            { color: latitude ? '#FFF' : cores.texto }
-          ]}>
-            {localizando ? '📍 Localizando...' : latitude ? '📍 Localização marcada ✅' : '📍 Marcar localização no mapa'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={[styles.label, { color: cores.texto }]}>Prontuário</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
+          placeholder="Nº do prontuário"
+          placeholderTextColor={placeholderCor(cores, isEscuro)}
+          value={prontuario}
+          onChangeText={setProntuario}
+          onFocus={scrollToEnd}
+        />
 
         {/* ── Condições de Saúde ──────────────────────── */}
         <Text style={[styles.sectionTitle, { color: cores.primary }]}>Condições de Saúde</Text>
@@ -597,16 +562,4 @@ const styles = StyleSheet.create({
   subCampos: { paddingLeft: 16, borderLeftWidth: 3, borderLeftColor: '#D81B60', marginBottom: 10 },
   optionsRow: { flexDirection: 'row', gap: 8, marginBottom: 15, flexWrap: 'wrap' },
   optionChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1 },
-  localizacaoBtn: {
-    height: 48,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  localizacaoBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
 });

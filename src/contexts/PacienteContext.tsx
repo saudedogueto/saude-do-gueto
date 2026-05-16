@@ -36,8 +36,7 @@ export type Paciente = {
   aleitamentoBebe?: string;
 
   // Geolocalização 🗺️
-  latitude?: number;
-  longitude?: number;
+  prontuario?: string;
 };
 
 type PacienteContextType = {
