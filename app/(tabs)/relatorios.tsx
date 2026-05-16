@@ -41,18 +41,68 @@ export default function RelatoriosScreen() {
   const visitasPorMotivo = (motivo: string) =>
     visitasPeriodo.filter(v => v.motivo === motivo).length;
 
+  const gerarDataHora = () => {
+    const agora = new Date();
+    return agora.toLocaleString('pt-BR');
+  };
+
+  const periodoLabel = periodo === 'geral' ? 'GERAL' : periodo === 'mes' ? 'ÚLTIMOS 30 DIAS' : 'ÚLTIMOS 7 DIAS';
+
   const exportarDados = async () => {
     try {
-      const cabecalho = 'Nome;SUS;Telefone;Endereço;Microárea;Hipertensão;Diabetes;Gestante;Data Cadastro\n';
-      const linhas = pacientes.map(p =>
-        `${p.nome};${p.cartaoSUS};${p.telefone};${p.endereco || ''};${p.microarea || ''};${p.hipertensao ? 'Sim' : 'Não'};${p.diabetes ? 'Sim' : 'Não'};${p.gestante ? 'Sim' : 'Não'};${p.dataCadastro}`
+      const agora = gerarDataHora();
+      const pacientesVis = visitasPeriodo.length;
+      const totalHipertensos = pacientes.filter(p => p.hipertensao).length;
+      const totalDiabeticos = pacientes.filter(p => p.diabetes).length;
+      const totalGestantes = pacientes.filter(p => p.gestante).length;
+
+      const cabecalhoGeral = [
+        '=== RELATÓRIO SAÚDE DO GUETO ===',
+        `Gerado em: ${agora}`,
+        `Período: ${periodoLabel}`,
+        '',
+        '--- RESUMO ---',
+        `Total de pacientes;${pacientes.length}`,
+        `Total de visitas;${pacientesVis}`,
+        `Hipertensos;${totalHipertensos}`,
+        `Diabéticos;${totalDiabeticos}`,
+        `Gestantes;${totalGestantes}`,
+        '',
+        '--- PACIENTES ---',
+        'Nome;CPF;Cartão SUS;Telefone;Endereço;Número;Bairro;Microárea;Data Nasc;Idade;Hipertensão;Diabetes;Gestante;Observações;Data Cadastro'
+      ].join('\n');
+
+      const calcIdade = (dn: string) => {
+        if (!dn) return '';
+        const diff = new Date().getTime() - new Date(dn.split('/').reverse().join('-')).getTime();
+        return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25)).toString();
+      };
+
+      const linhasPacientes = pacientes.map(p =>
+        [
+          `"${p.nome}"`,
+          p.cpf || '',
+          p.cartaoSUS || '',
+          p.telefone || '',
+          `"${p.endereco || ''}"`,
+          p.numero || '',
+          `"${p.bairro || ''}"`,
+          p.microarea || '',
+          p.dataNascimento || '',
+          calcIdade(p.dataNascimento || ''),
+          p.hipertensao ? 'Sim' : 'Não',
+          p.diabetes ? 'Sim' : 'Não',
+          p.gestante ? 'Sim' : 'Não',
+          `"${p.observacoes || ''}"`,
+          p.dataCadastro || ''
+        ].join(';')
       ).join('\n');
 
-      const csv = cabecalho + linhas;
+      const csv = cabecalhoGeral + '\n' + linhasPacientes;
 
       await Share.share({
         message: csv,
-        title: 'Relatório Saúde do Gueto',
+        title: 'Relatório Saúde do Gueto - Completo',
       });
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível exportar os dados');
@@ -61,16 +111,117 @@ export default function RelatoriosScreen() {
 
   const exportarVisitas = async () => {
     try {
-      const cabecalho = 'Paciente;Data;Hora;Motivo;PA Sistólica;PA Diastólica;Glicemia;Vacinas;Próxima Visita\n';
-      const linhas = visitas.map(v =>
-        `${v.pacienteNome};${v.data};${v.hora};${v.motivo};${v.pressaoSistolica || ''};${v.pressaoDiastolica || ''};${v.glicemia || ''};${v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Não'};${v.proximaVisita || ''}`
+      const agora = gerarDataHora();
+      const filtradas = visitasPeriodo;
+      const rotina = filtradas.filter(v => v.motivo === 'rotina').length;
+      const retorno = filtradas.filter(v => v.motivo === 'retorno').length;
+      const queixa = filtradas.filter(v => v.motivo === 'queixa').length;
+      const enc = filtradas.filter(v => v.motivo === 'encaminhamento').length;
+
+      const cabecalhoGeral = [
+        '=== RELATÓRIO DE VISITAS - SAÚDE DO GUETO ===',
+        `Gerado em: ${agora}`,
+        `Período: ${periodoLabel}`,
+        '',
+        '--- RESUMO DE VISITAS ---',
+        `Total de visitas;${filtradas.length}`,
+        `Pacientes visitados;${new Set(filtradas.map(v => v.pacienteId)).size}`,
+        `Visitas de Rotina;${rotina}`,
+        `Visitas de Retorno;${retorno}`,
+        `Visitas por Queixa;${queixa}`,
+        `Encaminhamentos;${enc}`,
+        '',
+        '--- DETALHAMENTO ---',
+        'Data;Hora;Paciente;Motivo;PA Sistólica;PA Diastólica;Glicemia;Vacinas;Peso;Altura;Observações;Encaminhado para;Próxima Visita'
+      ].join('\n');
+
+      const motivonome = (m: string) => {
+        const map: Record<string, string> = { rotina: 'Rotina', retorno: 'Retorno', queixa: 'Queixa', encaminhamento: 'Encaminhamento' };
+        return map[m] || m;
+      };
+
+      const linhasVisitas = filtradas.map(v =>
+        [
+          v.data || '',
+          v.hora || '',
+          `"${v.pacienteNome || ''}"`,
+          motivonome(v.motivo || ''),
+          v.pressaoSistolica || '',
+          v.pressaoDiastolica || '',
+          v.glicemia || '',
+          v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Não',
+          v.peso || '',
+          v.altura || '',
+          `"${v.observacoes || ''}"`,
+          `"${v.encaminhamento || ''}"`,
+          v.proximaVisita || ''
+        ].join(';')
       ).join('\n');
 
-      const csv = cabecalho + linhas;
+      const csv = cabecalhoGeral + '\n' + linhasVisitas;
 
       await Share.share({
         message: csv,
-        title: 'Relatório de Visitas - Saúde do Gueto',
+        title: 'Relatório de Visitas - Saúde do Gueto - Completo',
+      });
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível exportar os dados');
+    }
+  };
+
+  const exportarRelatorioCompleto = async () => {
+    try {
+      const agora = gerarDataHora();
+      const p = pacientes.length;
+      const hv = pacientes.filter(p => p.hipertensao).length;
+      const dv = pacientes.filter(p => p.diabetes).length;
+      const gv = pacientes.filter(p => p.gestante).length;
+      const totVis = visitasPeriodo.length;
+      const pacVis = new Set(visitasPeriodo.map(v => v.pacienteId)).size;
+
+      const cabecalho = [
+        '=== RELATÓRIO COMPLETO - SAÚDE DO GUETO ===',
+        `Gerado em: ${agora}`,
+        `Período: ${periodoLabel}`,
+        '',
+        '--- RESUMO GERAL ---',
+        `Pacientes cadastrados;${p}`,
+        `Hipertensos;${hv}`,
+        `Diabéticos;${dv}`,
+        `Gestantes;${gv}`,
+        `Total de visitas;${totVis}`,
+        `Pacientes visitados;${pacVis}`,
+        '',
+        '--- PACIENTES ---',
+        'Nome;CPF;Cartão SUS;Telefone;Endereço;Número;Bairro;Microárea;Data Nasc;Idade;Hipertensão;Diabetes;Gestante;Observações;Data Cadastro',
+      ].join('\n');
+
+      const calcIdade = (dn: string) => {
+        if (!dn) return '';
+        const diff = new Date().getTime() - new Date(dn.split('/').reverse().join('-')).getTime();
+        return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25)).toString();
+      };
+
+      const linhasP = pacientes.map(p =>
+        [`"${p.nome}"`, p.cpf || '', p.cartaoSUS || '', p.telefone || '', `"${p.endereco || ''}"`, p.numero || '', `"${p.bairro || ''}"`, p.microarea || '', p.dataNascimento || '', calcIdade(p.dataNascimento || ''), p.hipertensao ? 'Sim' : 'Não', p.diabetes ? 'Sim' : 'Não', p.gestante ? 'Sim' : 'Não', `"${p.observacoes || ''}"`, p.dataCadastro || ''].join(';')
+      ).join('\n');
+
+      const motivonome = (m: string) => {
+        const map: Record<string, string> = { rotina: 'Rotina', retorno: 'Retorno', queixa: 'Queixa', encaminhamento: 'Encaminhamento' };
+        return map[m] || m;
+      };
+
+      const secVisitas = '\n\n--- VISITAS ---\nData;Hora;Paciente;Motivo;PA Sistólica;PA Diastólica;Glicemia;Vacinas;Peso;Altura;Observações;Encaminhado para;Próxima Visita';
+
+      const linhasV = visitasPeriodo.map(v =>
+        [v.data || '', v.hora || '', `"${v.pacienteNome || ''}"`, motivonome(v.motivo || ''), v.pressaoSistolica || '', v.pressaoDiastolica || '', v.glicemia || '', v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Não', v.peso || '', v.altura || '', `"${v.observacoes || ''}"`, `"${v.encaminhamento || ''}"`, v.proximaVisita || ''].join(';')
+      ).join('\n');
+
+      const csv = cabecalho + '\n' + linhasP + secVisitas + '\n' + linhasV;
+
+      await Share.share({
+        message: csv,
+        title: 'Relatório Completo - Saúde do Gueto',
       });
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível exportar os dados');
@@ -163,14 +314,17 @@ export default function RelatoriosScreen() {
       <Text style={styles.sectionTitle}>📤 Exportar Dados</Text>
       <View style={styles.exportRow}>
         <TouchableOpacity style={styles.exportBtn} onPress={exportarDados}>
-          <Text style={styles.exportText}>📋 Pacientes (CSV)</Text>
+          <Text style={styles.exportText}>📋 Pacientes</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.exportBtn} onPress={exportarVisitas}>
-          <Text style={styles.exportText}>🏠 Visitas (CSV)</Text>
+          <Text style={styles.exportText}>🏠 Visitas</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarRelatorioCompleto}>
+        <Text style={styles.exportTextCompleto}>📑 Relatório Completo (CSV)</Text>
+      </TouchableOpacity>
       <Text style={styles.exportInfo}>
-        Os dados são compartilhados via CSV — compatível com Excel, Google Sheets e e-SUS
+        CSV profissional com resumo + dados — compatível com Excel, Google Sheets e e-SUS
       </Text>
 
       <View style={{ height: 40 }} />
@@ -327,6 +481,23 @@ const styles = StyleSheet.create({
     color: '#FF8C00',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  exportBtnCompleto: {
+    backgroundColor: '#FF8C00',
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  exportTextCompleto: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
   exportInfo: {
     fontSize: 12,

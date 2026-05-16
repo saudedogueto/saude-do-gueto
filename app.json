@@ -2,7 +2,7 @@
   "expo": {
     "name": "SaudeDoGueto",
     "slug": "saude-do-gueto",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -14,10 +14,15 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.saudedogueto.app"
+      "package": "com.saudedogueto.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {},
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "saudedogueto",
     "extra": {
       "eas": {
@@ -28,7 +33,14 @@
       }
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "O Saúde do Gueto precisa da sua localização para marcar os pacientes no mapa.",
+          "locationWhenInUsePermission": "O Saúde do Gueto precisa da sua localização para marcar os pacientes no mapa."
+        }
+      ]
     ],
     "owner": "saudedogueto"
   },

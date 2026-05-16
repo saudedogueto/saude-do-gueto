@@ -110,6 +110,14 @@ export default function TabsLayout() {
           headerTintColor: '#FF8C00',
         }}
       />
+      <Stack.Screen
+        name="mapa"
+        options={{
+          title: '🗺️ Mapa Social',
+          headerBackTitle: 'Voltar',
+          headerTintColor: '#FF8C00',
+        }}
+      />
     </Stack>
   );
 }

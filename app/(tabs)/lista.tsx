@@ -63,7 +63,7 @@ export default function ListaScreen() {
     >
       <View style={styles.cardHeader}>
         <Text style={styles.nome}>{item.nome}</Text>
-        <Text style={styles.sus}>SUS: {item.cartaoSUS || '---'}</Text>
+        <Text style={styles.sus}>CPF: {item.cpf || '---'}</Text>
       </View>
 
       <View style={styles.tags}>
@@ -73,6 +73,7 @@ export default function ListaScreen() {
       </View>
 
       {item.telefone ? <Text style={styles.info}>📞 {item.telefone}</Text> : null}
+      {item.endereco ? <Text style={styles.info}>🏠 {item.endereco}</Text> : null}
       {item.microarea ? <Text style={styles.info}>📍 {item.microarea}</Text> : null}
     </TouchableOpacity>
   );
@@ -101,7 +102,7 @@ export default function ListaScreen() {
 
       <TextInput
         style={styles.search}
-        placeholder="🔍 Buscar por nome, SUS ou telefone..."
+        placeholder="🔍 Buscar por nome, CPF, SUS ou telefone..."
         value={busca}
         onChangeText={setBusca}
       />

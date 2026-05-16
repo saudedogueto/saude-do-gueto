@@ -4,25 +4,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type Visita = {
   id: string;
   pacienteId: string;
-  pacienteNome: string;
   data: string;
-  hora: string;
-  motivo: 'rotina' | 'retorno' | 'queixa' | 'encaminhamento' | 'outro';
   pressaoSistolica?: string;
   pressaoDiastolica?: string;
   glicemia?: string;
-  vacinaEmDia?: boolean;
-  observacoes: string;
-  proximaVisita: string;
+  medicamentos?: string;
+  observacoes?: string;
 };
 
 type VisitaContextType = {
   visitas: Visita[];
   carregarVisitas: () => Promise<void>;
   salvarVisita: (visita: Omit<Visita, 'id'>) => Promise<void>;
-  excluirVisita: (id: string) => Promise<void>;
-  buscarVisitasPorPaciente: (pacienteId: string) => Visita[];
-  ultimaVisita: (pacienteId: string) => Visita | undefined;
+  visitasPorPaciente: (pacienteId: string) => Visita[];
 };
 
 const VisitaContext = createContext<VisitaContextType>({} as VisitaContextType);
@@ -53,33 +47,15 @@ export function VisitaProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const excluirVisita = async (id: string) => {
-    try {
-      const dados = await AsyncStorage.getItem('@visitas');
-      let lista: Visita[] = dados ? JSON.parse(dados) : [];
-      lista = lista.filter(v => v.id !== id);
-      await AsyncStorage.setItem('@visitas', JSON.stringify(lista));
-      setVisitas(lista);
-    } catch (error) {
-      console.error('Erro ao excluir visita:', error);
-    }
-  };
-
-  const buscarVisitasPorPaciente = (pacienteId: string) => {
+  const visitasPorPaciente = (pacienteId: string) => {
     return visitas
       .filter(v => v.pacienteId === pacienteId)
-      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
-  };
-
-  const ultimaVisita = (pacienteId: string) => {
-    const visitasPaciente = buscarVisitasPorPaciente(pacienteId);
-    return visitasPaciente[0];
+      .sort((a, b) => b.data.localeCompare(a.data));
   };
 
   return (
     <VisitaContext.Provider value={{
-      visitas, carregarVisitas, salvarVisita,
-      excluirVisita, buscarVisitasPorPaciente, ultimaVisita
+      visitas, carregarVisitas, salvarVisita, visitasPorPaciente
     }}>
       {children}
     </VisitaContext.Provider>

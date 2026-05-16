@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type Paciente = {
   id: string;
   nome: string;
+  cpf: string;
   dataNascimento: string;
   cartaoSUS: string;
   telefone: string;
@@ -13,8 +14,30 @@ export type Paciente = {
   observacoes: string;
   endereco?: string;
   microarea?: string;
+  foto?: string;
   dataCadastro: string;
   ultimaVisita?: string;
+
+  // Gestante 🤰
+  idadeGestacional?: string;
+  consultasPreNatal?: string;
+  dpp?: string;
+
+  // Puerpério 👩‍🍼 (aparece na página da gestante)
+  puerperio: boolean;
+  dataParto?: string;
+  tipoParto?: string;
+  aleitamentoPuerperio?: string;
+
+  // Menor de 2 anos 👶
+  menorDoisAnos: boolean;
+  pesoNascer?: string;
+  vacinacaoDia: boolean;
+  aleitamentoBebe?: string;
+
+  // Geolocalização 🗺️
+  latitude?: number;
+  longitude?: number;
 };
 
 type PacienteContextType = {

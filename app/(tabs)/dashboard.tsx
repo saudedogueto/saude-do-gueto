@@ -123,6 +123,13 @@ export default function DashboardScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/(tabs)/mapa')}
+        >
+          <Text style={styles.buttonText}>🗺️ Mapa Social</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, styles.buttonSecundario]}
           onPress={() => router.push('/(tabs)/esus-export')}
         >

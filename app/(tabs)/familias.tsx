@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, FlatList, Alert
@@ -12,35 +12,71 @@ export default function FamiliasScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
   const { familias, carregarFamilias, criarFamilia, adicionarMembro, removerMembro } = useFamilias();
   const { cores } = useTema();
-  const [buscaPaciente, setBuscaPaciente] = useState('');
-  const [pacientesFiltrados, setPacientesFiltrados] = useState<Paciente[]>([]);
-  const [mostrarForm, setMostrarForm] = useState(false);
   const [criando, setCriando] = useState(false);
 
-  // Form de nova família
+  // ─── Form de nova família ───────────────────────────
+  const [mostrarForm, setMostrarForm] = useState(false);
   const [nomeResp, setNomeResp] = useState('');
+  const [sugestoesResp, setSugestoesResp] = useState<Paciente[]>([]);
+  const [respSelecionado, setRespSelecionado] = useState<Paciente | null>(null);
+  const enderecoRef = useRef<TextInput>(null);
   const [endereco, setEndereco] = useState('');
   const [microarea, setMicroarea] = useState('');
   const [telefone, setTelefone] = useState('');
+
+  // ─── Busca de membros (separada por família) ─────────
+  const [buscasMembros, setBuscasMembros] = useState<Record<string, string>>({});
+
+  // IDs dos pacientes que já estão em alguma família
+  const pacientesEmFamilias = new Set<string>();
+  familias.forEach(f => f.membros.forEach(id => pacientesEmFamilias.add(id)));
+
+  // Pacientes disponíveis pra adicionar (sem família)
+  const pacientesDisponiveis = pacientes.filter(p => !pacientesEmFamilias.has(p.id));
 
   useEffect(() => {
     carregarFamilias();
     carregarPacientes();
   }, []);
 
-  useEffect(() => {
-    if (buscaPaciente.trim()) {
-      const t = buscaPaciente.toLowerCase();
-      setPacientesFiltrados(pacientes.filter(p => p.nome.toLowerCase().includes(t)));
+  // ─── Autocomplete do responsável ─────────────────────
+  const handleNomeRespChange = useCallback((texto: string) => {
+    setNomeResp(texto);
+    setRespSelecionado(null);
+    if (texto.trim().length >= 1) {
+      const t = texto.toLowerCase();
+      const encontrados = pacientes.filter(p => p.nome.toLowerCase().includes(t));
+      setSugestoesResp(encontrados.slice(0, 8)); // max 8 sugestões
     } else {
-      setPacientesFiltrados([]);
+      setSugestoesResp([]);
     }
-  }, [buscaPaciente, pacientes]);
+  }, [pacientes]);
 
-  // Contar membros não duplicados
-  const pacientesEmFamilias = new Set<string>();
-  familias.forEach(f => f.membros.forEach(id => pacientesEmFamilias.add(id)));
+  const selecionarResponsavel = useCallback((paciente: Paciente) => {
+    setRespSelecionado(paciente);
+    setNomeResp(paciente.nome);
+    setSugestoesResp([]);
+    // Se o paciente já tem endereço, preenche automaticamente
+    if (paciente.endereco) setEndereco(paciente.endereco);
+    if (paciente.microarea) setMicroarea(paciente.microarea);
+    if (paciente.telefone) setTelefone(paciente.telefone);
+    enderecoRef.current?.focus();
+  }, []);
 
+  // ─── Busca de membros (separada) ─────────────────────
+  const handleBuscaMembroChange = useCallback((familiaId: string, texto: string) => {
+    setBuscasMembros(prev => ({ ...prev, [familiaId]: texto }));
+  }, []);
+
+  const getPacientesFiltrados = useCallback((familiaId: string) => {
+    const termo = (buscasMembros[familiaId] || '').toLowerCase().trim();
+    if (!termo) return [];
+    return pacientesDisponiveis.filter(p =>
+      p.nome.toLowerCase().includes(termo)
+    );
+  }, [buscasMembros, pacientesDisponiveis]);
+
+  // ─── Criar família ───────────────────────────────────
   const handleCriarFamilia = async () => {
     if (!nomeResp.trim() || !endereco.trim()) {
       Alert.alert('Atenção', 'Nome do responsável e endereço são obrigatórios');
@@ -48,17 +84,24 @@ export default function FamiliasScreen() {
     }
     setCriando(true);
     try {
-      await criarFamilia({
+      const familiaId = await criarFamilia({
         nomeResponsavel: nomeResp.trim(),
         endereco: endereco.trim(),
         microarea: microarea.trim(),
         telefone: telefone.trim(),
       });
+      // Se selecionou um paciente existente como responsável, já adiciona como membro
+      if (respSelecionado) {
+        await adicionarMembro(familiaId, respSelecionado.id);
+      }
       Alert.alert('Família criada!', 'Nova família registrada com sucesso');
+      // Reset do formulário
       setNomeResp('');
       setEndereco('');
       setMicroarea('');
       setTelefone('');
+      setRespSelecionado(null);
+      setSugestoesResp([]);
       setMostrarForm(false);
       carregarFamilias();
     } catch (error) {
@@ -68,9 +111,20 @@ export default function FamiliasScreen() {
     }
   };
 
-  const handleAdicionar = async (familiaId: string, pacienteId: string) => {
+  const cancelarForm = () => {
+    setMostrarForm(false);
+    setNomeResp('');
+    setEndereco('');
+    setMicroarea('');
+    setTelefone('');
+    setRespSelecionado(null);
+    setSugestoesResp([]);
+  };
+
+  // ─── Adicionar membro ────────────────────────────────
+  const handleAdicionarMembro = async (familiaId: string, pacienteId: string) => {
     await adicionarMembro(familiaId, pacienteId);
-    setBuscaPaciente('');
+    setBuscasMembros(prev => ({ ...prev, [familiaId]: '' }));
     carregarFamilias();
   };
 
@@ -81,7 +135,7 @@ export default function FamiliasScreen() {
         {familias.length} família(s) • {pacientesEmFamilias.size} paciente(s) vinculados
       </Text>
 
-      {/* Criar Família */}
+      {/* ─── BOTÃO CRIAR / FORMULÁRIO ───────────────── */}
       {!mostrarForm ? (
         <TouchableOpacity
           style={styles.btnCriar}
@@ -92,13 +146,36 @@ export default function FamiliasScreen() {
       ) : (
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Nova Família</Text>
+
+          {/* Responsável com autocomplete */}
+          <View style={styles.autocompleteWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nome do responsável *"
+              value={nomeResp}
+              onChangeText={handleNomeRespChange}
+            />
+            {sugestoesResp.length > 0 && (
+              <View style={styles.sugestoesBox}>
+                {sugestoesResp.map(p => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.sugestaoItem}
+                    onPress={() => selecionarResponsavel(p)}
+                  >
+                    <Text style={styles.sugestaoNome}>{p.nome}</Text>
+                    <Text style={styles.sugestaoInfo}>
+                      {p.endereco ? `📍 ${p.endereco}` : ''}
+                      {p.microarea ? ` • 🏷️ ${p.microarea}` : ''}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
           <TextInput
-            style={styles.input}
-            placeholder="Nome do responsável *"
-            value={nomeResp}
-            onChangeText={setNomeResp}
-          />
-          <TextInput
+            ref={enderecoRef}
             style={styles.input}
             placeholder="Endereço completo *"
             value={endereco}
@@ -117,6 +194,7 @@ export default function FamiliasScreen() {
             onChangeText={setTelefone}
             keyboardType="phone-pad"
           />
+
           <View style={styles.formActions}>
             <TouchableOpacity
               style={[styles.btn, styles.btnSalvar]}
@@ -129,7 +207,7 @@ export default function FamiliasScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btn, styles.btnCancelar]}
-              onPress={() => setMostrarForm(false)}
+              onPress={cancelarForm}
             >
               <Text style={styles.btnCancelarText}>Cancelar</Text>
             </TouchableOpacity>
@@ -137,11 +215,14 @@ export default function FamiliasScreen() {
         </View>
       )}
 
-      {/* Lista de Famílias */}
+      {/* ─── LISTA DE FAMÍLIAS ─────────────────────── */}
       {familias.map(familia => {
         const membros = familia.membros
           .map(id => pacientes.find(p => p.id === id))
           .filter(Boolean) as Paciente[];
+
+        const termoBusca = buscasMembros[familia.id] || '';
+        const resultadosBusca = getPacientesFiltrados(familia.id);
 
         return (
           <View key={familia.id} style={styles.familiaCard}>
@@ -153,7 +234,7 @@ export default function FamiliasScreen() {
               ) : null}
             </View>
 
-            {/* Membros */}
+            {/* Membros atuais */}
             {membros.length > 0 && (
               <View style={styles.membrosLista}>
                 <Text style={styles.membrosTitle}>
@@ -184,33 +265,38 @@ export default function FamiliasScreen() {
               </View>
             )}
 
-            {/* Adicionar membro */}
+            {/* Busca de membros (só pacientes disponíveis) */}
             <TextInput
               style={styles.buscaInput}
               placeholder="🔍 Adicionar paciente pelo nome..."
-              value={familia.id === buscaPaciente ? buscaPaciente : ''}
-              onChangeText={text => setBuscaPaciente(text)}
-              onFocus={() => setBuscaPaciente('')}
+              value={termoBusca}
+              onChangeText={texto => handleBuscaMembroChange(familia.id, texto)}
             />
 
-            {buscaPaciente.length > 0 && pacientesFiltrados.map(p => {
-              const jaMembro = familia.membros.includes(p.id);
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[styles.pacienteItem, jaMembro && styles.pacienteInativo]}
-                  onPress={() => {
-                    if (!jaMembro) handleAdicionar(familia.id, p.id);
-                  }}
-                  disabled={jaMembro}
-                >
-                  <Text style={styles.pacienteItemNome}>{p.nome}</Text>
-                  <Text style={styles.pacienteItemStatus}>
-                    {jaMembro ? '✅ Já adicionado' : '+ Adicionar'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {termoBusca.length > 0 && resultadosBusca.length > 0 && (
+              <View style={styles.resultadosBusca}>
+                {resultadosBusca.map(p => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.pacienteItem}
+                    onPress={() => handleAdicionarMembro(familia.id, p.id)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.pacienteItemNome}>{p.nome}</Text>
+                      <Text style={styles.pacienteItemInfo}>
+                        {p.endereco ? `📍 ${p.endereco}` : ''}
+                        {p.microarea ? ` • 🏷️ ${p.microarea}` : ''}
+                      </Text>
+                    </View>
+                    <Text style={styles.pacienteItemAdd}>+</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {termoBusca.length > 0 && resultadosBusca.length === 0 && (
+              <Text style={styles.semResultados}>Nenhum paciente disponível com esse nome</Text>
+            )}
           </View>
         );
       })}
@@ -246,6 +332,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+
+  // ─── Botão criar ─────────────────────────────────
   btnCriar: {
     backgroundColor: '#FF8C00',
     paddingVertical: 14,
@@ -258,6 +346,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  // ─── Formulário ──────────────────────────────────
   formCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -309,6 +399,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
+
+  // ─── Autocomplete ────────────────────────────────
+  autocompleteWrapper: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  sugestoesBox: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    marginTop: -8,
+    marginBottom: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  sugestaoItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  sugestaoNome: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  sugestaoInfo: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+
+  // ─── Card de família ─────────────────────────────
   familiaCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -333,6 +460,8 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
+
+  // ─── Membros ─────────────────────────────────────
   membrosLista: {
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
@@ -363,6 +492,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 4,
   },
+
+  // ─── Busca ───────────────────────────────────────
   buscaInput: {
     height: 40,
     backgroundColor: '#F5F5F5',
@@ -371,27 +502,47 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 6,
   },
+  resultadosBusca: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
   pacienteItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
-  },
-  pacienteInativo: {
-    opacity: 0.5,
+    backgroundColor: '#FAFAFA',
   },
   pacienteItemNome: {
     fontSize: 14,
     color: '#333',
-  },
-  pacienteItemStatus: {
-    fontSize: 12,
-    color: '#FF8C00',
     fontWeight: '600',
   },
+  pacienteItemInfo: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  pacienteItemAdd: {
+    fontSize: 22,
+    color: '#FF8C00',
+    fontWeight: 'bold',
+    paddingLeft: 8,
+  },
+  semResultados: {
+    fontSize: 12,
+    color: '#CCC',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+
+  // ─── Empty state ─────────────────────────────────
   empty: {
     alignItems: 'center',
     paddingVertical: 40,
