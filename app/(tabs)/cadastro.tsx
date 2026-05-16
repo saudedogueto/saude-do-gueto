@@ -51,7 +51,6 @@ export default function CadastroScreen() {
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState(p?.endereco || '');
   const [bairro, setBairro] = useState('');
-  const [microarea, setMicroarea] = useState(p?.microarea || '');
   const [hipertensao, setHipertensao] = useState(p?.hipertensao || false);
   const [diabetes, setDiabetes] = useState(p?.diabetes || false);
   const [gestante, setGestante] = useState(p?.gestante || false);
@@ -90,13 +89,13 @@ export default function CadastroScreen() {
       if (result) {
         setEndereco(result.logradouro ? `${result.logradouro}, ` : '');
         setBairro(result.bairro);
-        if (!microarea) setMicroarea(result.bairro);
+        if (!microareaProntuario) setMicroareaProntuario(result.bairro);
       } else {
         Alert.alert('CEP não encontrado', 'Verifique o número digitado.');
       }
       setBuscandoCep(false);
     }
-  }, [microarea]);
+  }, [microareaProntuario]);
 
   // Foto
   const handleTirarFoto = useCallback(async () => {
@@ -333,16 +332,6 @@ export default function CadastroScreen() {
           placeholderTextColor={placeholderCor(cores, isEscuro)}
           value={bairro}
           onChangeText={setBairro}
-          onFocus={scrollToEnd}
-        />
-
-        <Text style={[styles.label, { color: cores.texto }]}>Microárea</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
-          placeholder="Ex: Área 1, Micro 3"
-          placeholderTextColor={placeholderCor(cores, isEscuro)}
-          value={microarea}
-          onChangeText={setMicroarea}
           onFocus={scrollToEnd}
         />
 
