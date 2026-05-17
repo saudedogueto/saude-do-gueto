@@ -25,9 +25,11 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          # Corrigir o index.html para usar paths relativos
           cd dist
+          # Corrigir o index.html para usar paths relativos
           sed -i 's|src="/_expo/|src="./_expo/|g' index.html
+          # Injetar script que força redirect para rota inicial (hash routing)
+          sed -i 's|<div id="root"></div>|<div id="root"></div>\n<script>\n(function() {\n  // Se a URL não tem hash, redireciona para a rota inicial\n  var hash = window.location.hash;\n  if (!hash || hash === "#/" || hash === "#") {\n    window.location.hash = "#/(tabs)/dashboard";\n  }\n})();\n</script>|g' index.html
           # Copiar index.html como 404.html para roteamento SPA
           cp index.html 404.html
           # Criar .nojekyll para evitar que GitHub ignore pastas com underscore
