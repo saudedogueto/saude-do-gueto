@@ -8,7 +8,9 @@ import { router } from 'expo-router';
 
 export default function LembretesScreen() {
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [lembretes, setLembretes] = useState<Lembrete[]>([]);
+  const [excluirConfirm, setExcluirConfirm] = useState<Lembrete | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -34,16 +36,11 @@ export default function LembretesScreen() {
   const handleConcluir = async (id: string) => {
     await concluirLembrete(id);
     load();
+    showToast('Lembrete concluído!');
   };
 
   const handleExcluir = (item: Lembrete) => {
-    Alert.alert('Excluir', `Excluir lembrete de ${item.pacienteNome}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: async () => {
-        await excluirLembrete(item.id);
-        load();
-      }}
-    ]);
+    setExcluirConfirm(item);
   };
 
   const hoje = new Date();
@@ -126,6 +123,23 @@ export default function LembretesScreen() {
       )}
 
       <View style={{ height: 40 }} />
+
+      <ConfirmDialog
+        visivel={excluirConfirm !== null}
+        titulo="Excluir Lembrete"
+        mensagem={`Excluir lembrete de ${excluirConfirm?.pacienteNome}?`}
+        confirmarTexto="Excluir"
+        tipo="danger"
+        onConfirmar={async () => {
+          if (excluirConfirm) {
+            await excluirLembrete(excluirConfirm.id);
+            load();
+            showToast('Lembrete excluído');
+          }
+          setExcluirConfirm(null);
+        }}
+        onCancelar={() => setExcluirConfirm(null)}
+      />
     </ScrollView>
   );
 }

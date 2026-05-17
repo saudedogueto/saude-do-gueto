@@ -5,6 +5,8 @@ import {
 import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useVisitas, Visita } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
+import { ConfirmDialog } from '@/src/components/ConfirmDialog';
 import { router } from 'expo-router';
 
 type PacienteComVisitas = {
@@ -19,7 +21,9 @@ export default function HistoricoVisitasScreen() {
   const { carregarPacientes } = usePacientes();
   const { visitas, carregarVisitas, excluirVisita } = useVisitas();
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [pacientesVisitas, setPacientesVisitas] = useState<PacienteComVisitas[]>([]);
+  const [excluirConfirm, setExcluirConfirm] = useState<Visita | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,21 +58,7 @@ export default function HistoricoVisitasScreen() {
   }, [visitas]);
 
   const handleExcluir = (visita: Visita) => {
-    Alert.alert(
-      'Excluir Visita',
-      `Excluir visita de ${visita.pacienteNome} em ${visita.data}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            await excluirVisita(visita.id);
-            carregarVisitas();
-          }
-        }
-      ]
-    );
+    setExcluirConfirm(visita);
   };
 
   const formatarMotivo = (motivo: string) => {
@@ -174,6 +164,23 @@ export default function HistoricoVisitasScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <ConfirmDialog
+        visivel={excluirConfirm !== null}
+        titulo="Excluir Visita"
+        mensagem={`Excluir visita de ${excluirConfirm?.pacienteNome} em ${excluirConfirm?.data}?`}
+        confirmarTexto="Excluir"
+        tipo="danger"
+        onConfirmar={async () => {
+          if (excluirConfirm) {
+            await excluirVisita(excluirConfirm.id);
+            carregarVisitas();
+            showToast('Visita excluída');
+          }
+          setExcluirConfirm(null);
+        }}
+        onCancelar={() => setExcluirConfirm(null)}
+      />
     </View>
   );
 }

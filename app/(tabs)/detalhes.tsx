@@ -6,6 +6,7 @@ import {
 import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useVisitas, Visita } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
 import { router, useLocalSearchParams } from 'expo-router';
 
 type Aba = 'dados' | 'gestante' | 'visitas' | 'visita';
@@ -17,6 +18,7 @@ export default function DetalhesScreen() {
   const paciente = params?.id ? buscarPaciente(params.id as string) : null;
   const visitas = paciente ? visitasPorPaciente(paciente.id) : [];
 
+  const { showToast } = useToast();
   const [aba, setAba] = useState<Aba>('dados');
 
   // ── Campos da visita ───────────────────────────────
@@ -58,7 +60,7 @@ export default function DetalhesScreen() {
 
   const handleSalvarVisita = async () => {
     if (!vPressaoS && !vPressaoD && !vGlicemia && !vMedicamentos && !vObs) {
-      Alert.alert('Atenção', 'Preencha pelo menos um campo da visita.');
+      showToast('Preencha pelo menos um campo da visita', 'warning');
       return;
     }
     setSalvandoVisita(true);
@@ -78,12 +80,12 @@ export default function DetalhesScreen() {
         id: paciente.id,
         ultimaVisita: new Date().toISOString().split('T')[0],
       });
-      Alert.alert('Visita registrada!', 'Dados salvos com sucesso.');
+      showToast('Visita registrada com sucesso!');
       setVPressaoS(''); setVPressaoD(''); setVGlicemia('');
       setVMedicamentos(''); setVObs('');
       setAba('visitas');
     } catch {
-      Alert.alert('Erro', 'Não foi possível salvar a visita.');
+      showToast('Erro ao salvar visita', 'error');
     } finally {
       setSalvandoVisita(false);
     }
@@ -99,9 +101,9 @@ export default function DetalhesScreen() {
         tipoParto,
         aleitamentoPuerperio: aleitamentoPuerp,
       });
-      Alert.alert('Salvo!', 'Dados de puerpério atualizados.');
+      showToast('Dados de puerpério atualizados!');
     } catch {
-      Alert.alert('Erro', 'Não foi possível salvar.');
+      showToast('Erro ao salvar puerpério', 'error');
     }
   };
 

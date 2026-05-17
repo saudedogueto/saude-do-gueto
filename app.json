@@ -40,7 +40,8 @@
           "locationAlwaysAndWhenInUsePermission": "O Saúde do Gueto precisa da sua localização para marcar os pacientes no mapa.",
           "locationWhenInUsePermission": "O Saúde do Gueto precisa da sua localização para marcar os pacientes no mapa."
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "owner": "saudedogueto"
   },

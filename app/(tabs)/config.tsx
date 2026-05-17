@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTema, Tema } from '@/src/contexts/TemaContext';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { useToast } from '@/src/components/Toast';
+import { ConfirmDialog } from '@/src/components/ConfirmDialog';
 import { router } from 'expo-router';
 
 export default function ConfigScreen() {
   const { tema, cores, setTema, isEscuro } = useTema();
   const { logout } = useAuth();
+  const { showToast } = useToast();
+  const [limparConfirm, setLimparConfirm] = useState(false);
 
   const opcoesTema: { label: string; value: Tema }[] = [
     { label: '☀️ Claro', value: 'claro' },
@@ -18,21 +22,7 @@ export default function ConfigScreen() {
   ];
 
   const limparDados = () => {
-    Alert.alert(
-      'Limpar Todos os Dados',
-      'Isso apagará TODOS os pacientes, visitas e famílias. A senha será mantida. Tem certeza?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Limpar Tudo',
-          style: 'destructive',
-          onPress: async () => {
-            await AsyncStorage.multiRemove(['@pacientes', '@visitas', '@familias', '@ultimo_backup']);
-            Alert.alert('Dados limpos!', 'Todos os dados foram removidos.');
-          }
-        }
-      ]
-    );
+    setLimparConfirm(true);
   };
 
   const handleLogout = async () => {
@@ -113,6 +103,20 @@ export default function ConfigScreen() {
       </TouchableOpacity>
 
       <View style={{ height: 40 }} />
+
+      <ConfirmDialog
+        visivel={limparConfirm}
+        titulo="Limpar Todos os Dados"
+        mensagem="Isso apagará TODOS os pacientes, visitas e famílias. A senha será mantida. Tem certeza?"
+        confirmarTexto="Limpar Tudo"
+        tipo="danger"
+        onConfirmar={async () => {
+          await AsyncStorage.multiRemove(['@pacientes', '@visitas', '@familias', '@ultimo_backup']);
+          setLimparConfirm(false);
+          showToast('Todos os dados foram removidos');
+        }}
+        onCancelar={() => setLimparConfirm(false)}
+      />
     </ScrollView>
   );
 }

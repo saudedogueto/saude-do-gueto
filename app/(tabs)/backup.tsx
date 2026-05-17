@@ -5,9 +5,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
 
 export default function BackupScreen() {
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [ultimoBackup, setUltimoBackup] = useState<string | null>(null);
   const [tamanhoDados, setTamanhoDados] = useState('0 KB');
   const [salvando, setSalvando] = useState(false);
@@ -52,9 +54,9 @@ export default function BackupScreen() {
       const agora = new Date().toLocaleString('pt-BR');
       await AsyncStorage.setItem('@ultimo_backup', agora);
       setUltimoBackup(agora);
-      Alert.alert('Backup realizado!', 'Os dados foram exportados com sucesso. Guarde o arquivo em um local seguro.');
+      showToast('Backup realizado com sucesso!');
     } catch (error) {
-      Alert.alert('Backup cancelado ou falhou');
+      showToast('Backup cancelado ou falhou', 'error');
     } finally {
       setSalvando(false);
     }

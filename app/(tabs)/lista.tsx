@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
+import { ConfirmDialog } from '@/src/components/ConfirmDialog';
 import { router } from 'expo-router';
 
 type FiltroCondicao = 'todos' | 'hipertensao' | 'diabetes' | 'gestante' | 'menorDoisAnos';
@@ -14,7 +16,9 @@ export default function ListaScreen() {
   const { cores } = useTema();
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<FiltroCondicao>('todos');
+  const { showToast } = useToast();
   const [resultados, setResultados] = useState<Paciente[]>([]);
+  const [excluirConfirm, setExcluirConfirm] = useState<Paciente | null>(null);
 
   useEffect(() => {
     carregarPacientes();
@@ -37,21 +41,7 @@ export default function ListaScreen() {
   }, [busca, pacientes, filtro]);
 
   const handleExcluir = (paciente: Paciente) => {
-    Alert.alert(
-      'Excluir Paciente',
-      `Tem certeza que deseja excluir ${paciente.nome}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            await excluirPaciente(paciente.id);
-            carregarPacientes();
-          }
-        }
-      ]
-    );
+    setExcluirConfirm(paciente);
   };
 
   const renderPaciente = ({ item }: { item: Paciente }) => (
@@ -142,6 +132,23 @@ export default function ListaScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <ConfirmDialog
+        visivel={excluirConfirm !== null}
+        titulo="Excluir Paciente"
+        mensagem={`Tem certeza que deseja excluir ${excluirConfirm?.nome}?`}
+        confirmarTexto="Excluir"
+        tipo="danger"
+        onConfirmar={async () => {
+          if (excluirConfirm) {
+            await excluirPaciente(excluirConfirm.id);
+            carregarPacientes();
+            showToast('Paciente excluído');
+          }
+          setExcluirConfirm(null);
+        }}
+        onCancelar={() => setExcluirConfirm(null)}
+      />
     </View>
   );
 }

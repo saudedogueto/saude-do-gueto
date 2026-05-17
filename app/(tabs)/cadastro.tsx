@@ -5,6 +5,8 @@ import {
   Image, ActivityIndicator
 } from 'react-native';
 import { usePacientes } from '@/src/contexts/PacienteContext';
+import { usePacienteStore } from '@/src/store/pacienteStore';
+import { useToast } from '@/src/components/Toast';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -72,6 +74,8 @@ export default function CadastroScreen() {
 
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const { showToast } = useToast();
+  const criarPacienteStore = usePacienteStore(s => s.criar);
 
   // Máscaras
   const handleCpfChange = useCallback((v: string) => setCpf(mascaraCPF(v)), []);
@@ -183,12 +187,10 @@ export default function CadastroScreen() {
         // Puerpério começa false no cadastro
         puerperio: false,
       });
-      Alert.alert(editando ? 'Atualizado!' : 'Cadastrado!',
-        editando ? 'Dados atualizados com sucesso' : 'Paciente cadastrado com sucesso',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      showToast(editando ? 'Paciente atualizado com sucesso!' : 'Paciente cadastrado com sucesso!');
+      setTimeout(() => router.back(), 800);
     } catch {
-      Alert.alert('Erro', 'Não foi possível salvar. Tente novamente.');
+      showToast('Erro ao salvar paciente', 'error');
     } finally {
       setSalvando(false);
     }
