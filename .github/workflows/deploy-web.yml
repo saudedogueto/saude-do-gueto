@@ -10,6 +10,9 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,9 +28,40 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          # Post-processa dist/ para SPA + PWA
-          chmod +x "$GITHUB_WORKSPACE/scripts/inject-redirect.sh"
-          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" dist/index.html "$GITHUB_WORKSPACE"
+          cd dist
+
+          # Paths relativos
+          sed -i 's|src="/_expo/|src="./_expo/|g' index.html
+
+          # Hash redirect (SPA)
+          sed -i 's|</head>|<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script></head>|' index.html
+
+          # PWA manifest + theme-color
+          sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' index.html
+
+          # Service worker
+          sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' index.html
+
+          # 404 = index
+          cp index.html 404.html
+
+          # PWA assets
+          cp "${{ github.workspace }}/public/manifest.json" . || true
+          cp "${{ github.workspace }}/public/icon-192.png" . || true
+          cp "${{ github.workspace }}/public/icon-512.png" . || true
+
+          # Service worker minimal
+          cat > sw.js << 'SWEOF'
+          self.addEventListener('install', (e) => self.skipWaiting());
+          self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+          self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+          SWEOF
+
+          # .nojekyll
+          touch .nojekyll
+
+          echo "=== dist/ contents ==="
+          ls -la
 
       - name: Push to gh-pages
         run: |
