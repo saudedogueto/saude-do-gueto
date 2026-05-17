@@ -1,33 +1,56 @@
 #!/bin/bash
-# Post-processes dist/index.html for GitHub Pages SPA deployment
+# Post-processes dist/ for GitHub Pages SPA deployment
 # Usage: inject-redirect.sh <path/to/index.html>
-#
-# Expo Router with origin:false uses hash routing (#/rota).
-# GitHub Pages serves index.html for root URL /saude-do-gueto/.
-# The Expo app at root URL shows "Unmatched Route" because no hash is present.
-# This script injects a script that forces a hash redirect before Expo loads.
 
 set -e
 
 FILE="$1"
 DIR="$(dirname "$FILE")"
 
-echo "🔧 Injetando redirect SPA em $FILE..."
+echo "🔧 Preparando deploy para GitHub Pages..."
 
-# 1) Fix absolute paths to relative (needed for GitHub Pages subpath)
+# 1) Fix absolute paths to relative
 sed -i 's|src="/_expo/|src="./_expo/|g' "$FILE"
 
-# 2) Inject hash-redirect BEFORE </head> to set hash before Expo bundle loads
-# Uses sed with a simple approach (avoid Python dependency)
-# The redirect script runs immediately (non-deferred) before the expo bundle
+# 2) Inject hash-redirect ANTES do </head> (roda antes do bundle Expo)
 LINE='<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script>'
-
-# Insert before closing head tag
 sed -i "s|</head>|${LINE}</head>|" "$FILE"
 
-# 3) Copy index.html as 404.html for GitHub Pages SPA fallback
+# 3) Inject manifest link + viewport + theme-color para PWA
+MANIFEST='<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00">'
+sed -i "s|<title>|${MANIFEST}<title>|" "$FILE"
+
+# 4) Inject service worker registrator
+SW='<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script>'
+sed -i "s|</body>|${SW}</body>|" "$FILE"
+
+# 5) Copy index.html as 404.html
 cp "$FILE" "$DIR/404.html"
 
-echo "✅ Inject concluído e 404.html criado"
-echo "--- Primeiras 5 linhas do $FILE:"
-head -5 "$FILE"
+# 6) Copy public assets (manifest, icons) to dist
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+cp "$PROJECT_DIR/public/"*.json "$DIR/" 2>/dev/null || true
+cp "$PROJECT_DIR/public/"icon-*.png "$DIR/assets/" 2>/dev/null || true
+
+# 7) Create service worker
+cat > "$DIR/sw.js" << 'SWEOF'
+self.addEventListener('install', function(e) {
+  self.skipWaiting();
+});
+self.addEventListener('activate', function(e) {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', function(e) {
+  e.respondWith(fetch(e.request).catch(function() {
+    return caches.match(e.request);
+  }));
+});
+SWEOF
+
+echo "✅ Deploy preparado"
+echo "   - Redirect injetado"
+echo "   - Manifest/PWA configurado"
+echo "   - 404.html criado"
+echo "   - Service worker criado"
+echo "   - Ícones copiados"
