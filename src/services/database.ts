@@ -1,23 +1,36 @@
-import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 
-let db: SQLite.SQLiteDatabase | null = null;
+let SQLite: any = null;
+let db: any = null;
 
-export async function getDb(): Promise<SQLite.SQLiteDatabase> {
+// Só importa expo-sqlite em plataformas nativas (não web)
+async function getSQLite() {
+  if (!SQLite) {
+    if (Platform.OS === 'web') {
+      const { getWebDb } = await import('./storage-web');
+      return getWebDb();
+    }
+    SQLite = await import('expo-sqlite');
+  }
+  return SQLite;
+}
+
+export async function getDb(): Promise<any> {
   if (db) return db;
 
-  // Web fallback: usa AsyncStorage porque expo-sqlite não roda 100% no navegador
   if (Platform.OS === 'web') {
-    const { getWebDb } = await import('./storage-web');
-    return getWebDb();
+    const storage = await import('./storage-web');
+    db = storage.getWebDb();
+    return db;
   }
 
-  db = await SQLite.openDatabaseAsync('saudegueto.db');
+  const sqlite = await import('expo-sqlite');
+  db = await sqlite.openDatabaseAsync('saudegueto.db');
   await initTables(db);
   return db;
 }
 
-async function initTables(database: SQLite.SQLiteDatabase) {
+async function initTables(database: any) {
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS familias (
       id TEXT PRIMARY KEY,
