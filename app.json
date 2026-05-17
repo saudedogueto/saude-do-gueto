@@ -29,7 +29,7 @@
         "projectId": "eb186d7d-18ce-49c0-8711-26e016fc7930"
       },
       "router": {
-        "origin": true
+        "origin": false
       }
     },
     "plugins": [
