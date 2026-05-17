@@ -10,12 +10,12 @@
   "theme_color": "#FF8C00",
   "icons": [
     {
-      "src": "/saude-do-gueto/assets/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/saude-do-gueto/assets/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
