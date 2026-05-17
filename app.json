@@ -21,7 +21,9 @@
         }
       }
     },
-    "web": {},
+    "web": {
+      "baseUrl": "/saude-do-gueto"
+    },
     "newArchEnabled": false,
     "scheme": "saudedogueto",
     "extra": {
