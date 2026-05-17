@@ -13,7 +13,7 @@ export function DashboardStats() {
         <Text style={styles.icone}>🏠</Text>
         <View style={styles.info}>
           <Text style={styles.valor}>{familias.length}</Text>
-          <Text style={styles.titulo}>Famílias</Text>
+          <Text style={styles.titulo}>Total de Famílias</Text>
         </View>
       </View>
       <View style={[styles.card, { borderLeftColor: '#F59E0B' }]}>
