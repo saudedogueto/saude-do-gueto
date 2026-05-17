@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, RefreshControl
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl
 } from 'react-native';
 import { useTema } from '@/src/contexts/TemaContext';
 import { carregarLembretes, concluirLembrete, excluirLembrete, Lembrete } from '@/src/utils/lembretes';
 import { router } from 'expo-router';
+import { useToast } from '@/src/components/Toast';
+import { ConfirmDialog } from '@/src/components/ConfirmDialog';
 
 export default function LembretesScreen() {
   const { cores } = useTema();
