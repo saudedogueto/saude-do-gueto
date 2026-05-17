@@ -28,11 +28,24 @@ jobs:
           cd dist
           # Corrigir o index.html para usar paths relativos
           sed -i 's|src="/_expo/|src="./_expo/|g' index.html
-          # Injetar script que força redirect para rota inicial (hash routing)
-          sed -i 's|<div id="root"></div>|<div id="root"></div>\n<script>\n(function() {\n  // Se a URL não tem hash, redireciona para a rota inicial\n  var hash = window.location.hash;\n  if (!hash || hash === "#/" || hash === "#") {\n    window.location.hash = "#/(tabs)/dashboard";\n  }\n})();\n</script>|g' index.html
+          # Injetar script hash-redirect com Python (mais robusto que sed para multiline)
+          python3 -c "
+import re
+with open('index.html', 'r') as f:
+    content = f.read()
+script = '''<script>
+(function(){
+  var h = window.location.hash;
+  if(!h||h==='#/'||h==='#'){window.location.hash='#/(tabs)/dashboard';}
+})();
+</script>'''
+content = content.replace('<div id="root"></div>', '<div id="root"></div>\n' + script)
+with open('index.html', 'w') as f:
+    f.write(content)
+"
           # Copiar index.html como 404.html para roteamento SPA
           cp index.html 404.html
-          # Criar .nojekyll para evitar que GitHub ignore pastas com underscore
+          # Criar .nojekyll
           touch .nojekyll
 
       - name: Push to gh-pages
