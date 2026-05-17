@@ -24,21 +24,10 @@ function StatCard({ titulo, valor, cor, icone }: StatCardProps) {
 
 export function DashboardStats() {
   const familias = useFamiliaStore(s => s.familias);
-  const pacientes = usePacienteStore(s => s.pacientes);
-  const totalMembros = familias.reduce((acc, f) => acc + f.membros.length, 0);
-
-  const stats = [
-    { titulo: 'Famílias', valor: familias.length, cor: '#3B82F6', icone: '🏠' },
-    { titulo: 'Pacientes', valor: pacientes.length, cor: '#10B981', icone: '👤' },
-    { titulo: 'Microáreas', valor: new Set(familias.map(f => f.microarea)).size, cor: '#F59E0B', icone: '📍' },
-    { titulo: 'Membros', valor: totalMembros, cor: '#8B5CF6', icone: '👨‍👩‍👧‍👦' },
-  ];
 
   return (
     <View style={styles.grid}>
-      {stats.map((s, i) => (
-        <StatCard key={i} {...s} />
-      ))}
+      <StatCard titulo="Famílias" valor={familias.length} cor="#3B82F6" icone="🏠" />
     </View>
   );
 }
