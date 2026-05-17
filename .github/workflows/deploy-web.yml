@@ -25,11 +25,12 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          bash scripts/inject-redirect.sh dist
+          chmod +x "${{ github.workspace }}/scripts/inject-redirect.sh"
+          bash "${{ github.workspace }}/scripts/inject-redirect.sh" "${{ github.workspace }}/dist" "${{ github.workspace }}"
 
       - name: Push to gh-pages
         run: |
-          cd dist
+          cd "${{ github.workspace }}/dist"
           git init
           git config user.name "saudedogueto"
           git config user.email "saudedogueto@users.noreply.github.com"

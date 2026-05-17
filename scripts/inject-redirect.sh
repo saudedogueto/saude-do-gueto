@@ -1,33 +1,55 @@
 #!/bin/bash
 # Post-processes dist/ for GitHub Pages SPA deployment
-set -euo pipefail
+# Usage: inject-redirect.sh <dist-dir> [project-dir]
 
 DIST="$1"
 PROJECT_DIR="${2:-$PWD}"
 
 echo "=== Preparando $DIST para GitHub Pages ==="
 
-cd "$DIST"
+cd "$DIST" || { echo "ERRO: nao encontrou $DIST"; exit 1; }
 
 # Paths relativos
 sed -i 's|src="/_expo/|src="./_expo/|g' index.html
+echo "  [OK] Paths relativizados"
 
 # Hash redirect (SPA)
 sed -i 's|</head>|<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script></head>|' index.html
+echo "  [OK] Hash redirect"
 
 # PWA manifest + theme-color
 sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' index.html
+echo "  [OK] Manifest injetado"
 
 # Service worker registration
 sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' index.html
+echo "  [OK] SW registrado"
 
 # 404.html = index.html
 cp index.html 404.html
+echo "  [OK] 404.html criado"
 
 # PWA assets from project public/
-cp "$PROJECT_DIR/public/manifest.json" . 2>/dev/null && echo "  manifest.json OK" || echo "  manifest.json NOT FOUND"
-cp "$PROJECT_DIR/public/icon-192.png" . 2>/dev/null && echo "  icon-192.png OK" || echo "  icon-192.png NOT FOUND"
-cp "$PROJECT_DIR/public/icon-512.png" . 2>/dev/null && echo "  icon-512.png OK" || echo "  icon-512.png NOT FOUND"
+if [ -f "$PROJECT_DIR/public/manifest.json" ]; then
+  cp "$PROJECT_DIR/public/manifest.json" .
+  echo "  [OK] manifest.json copiado"
+else
+  echo "  [!!] manifest.json NAO encontrado em $PROJECT_DIR/public/"
+fi
+
+if [ -f "$PROJECT_DIR/public/icon-192.png" ]; then
+  cp "$PROJECT_DIR/public/icon-192.png" .
+  echo "  [OK] icon-192.png copiado"
+else
+  echo "  [!!] icon-192.png NAO encontrado"
+fi
+
+if [ -f "$PROJECT_DIR/public/icon-512.png" ]; then
+  cp "$PROJECT_DIR/public/icon-512.png" .
+  echo "  [OK] icon-512.png copiado"
+else
+  echo "  [!!] icon-512.png NAO encontrado"
+fi
 
 # Service worker minimal
 cat > sw.js << 'SWEOF'
@@ -35,14 +57,14 @@ self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
 SWEOF
-echo "  sw.js OK"
+echo "  [OK] sw.js criado"
 
 # .nojekyll
 touch .nojekyll
-echo "  .nojekyll OK"
+echo "  [OK] .nojekyll"
 
 echo ""
 echo "=== Conteudo de $(pwd) ==="
 ls -la
 echo ""
-echo "=== Deploy preparado com sucesso ==="
+echo "=== Deploy preparado com sucesso! ==="
