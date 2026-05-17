@@ -25,19 +25,22 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          cd dist
-          # Garantir permissão e executar script de redirect
+          # Executar script de redirect (corrige paths, injeta hash-redirect, copia 404.html)
           chmod +x "$GITHUB_WORKSPACE/scripts/inject-redirect.sh"
-          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" index.html
+          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" dist/index.html
+          
           # Verificar se o script inseriu o redirect
-          if ! grep -q 'window.location.hash' index.html; then
+          if ! grep -q 'window.location.hash' dist/index.html; then
             echo "ERRO: script de redirect não foi inserido!"
+            grep -c '<script>' dist/index.html || true
             exit 1
           fi
-          # Copiar index.html como 404.html para roteamento SPA
-          cp index.html 404.html
-          # Criar .nojekyll
-          touch .nojekyll
+          
+          # Criar .nojekyll (evita que GitHub ignore _expo/)
+          touch dist/.nojekyll
+          
+          echo "=== Conteúdo de dist/ ==="
+          ls -la dist/
 
       - name: Push to gh-pages
         run: |
