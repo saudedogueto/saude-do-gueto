@@ -28,21 +28,21 @@ jobs:
           cd dist
           # Corrigir o index.html para usar paths relativos
           sed -i 's|src="/_expo/|src="./_expo/|g' index.html
-          # Injetar script hash-redirect com Python (mais robusto que sed para multiline)
-          python3 -c "
+          # Injetar script hash-redirect
+          python3 << 'PYEOF'
 import re
 with open('index.html', 'r') as f:
     content = f.read()
-script = '''<script>
+script = """<script>
 (function(){
   var h = window.location.hash;
-  if(!h||h==='#/'||h==='#'){window.location.hash='#/(tabs)/dashboard';}
+  if(!h||h==="#/"||h==="#"){window.location.hash="#/(tabs)/dashboard";}
 })();
-</script>'''
+</script>"""
 content = content.replace('<div id="root"></div>', '<div id="root"></div>\n' + script)
 with open('index.html', 'w') as f:
     f.write(content)
-"
+PYEOF
           # Copiar index.html como 404.html para roteamento SPA
           cp index.html 404.html
           # Criar .nojekyll
