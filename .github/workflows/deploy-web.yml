@@ -25,12 +25,34 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          chmod +x "${{ github.workspace }}/scripts/inject-redirect.sh"
-          bash "${{ github.workspace }}/scripts/inject-redirect.sh" "${{ github.workspace }}/dist" "${{ github.workspace }}"
+          echo "=== DEBUG ==="
+          pwd
+          ls -la dist/
+          echo "=== SED STEP 1: paths ==="
+          sed -i 's|src="/_expo/|src="./_expo/|g' dist/index.html
+          echo "=== SED STEP 2: hash redirect ==="
+          sed -i 's|<head>|<head><script>if(!location.hash||location.hash=="#/"||location.hash=="#"){location.replace(location.href.replace(/#.*$/,"")+"#/(tabs)/dashboard")}</script>|' dist/index.html
+          echo "=== SED STEP 3: manifest ==="
+          sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' dist/index.html
+          echo "=== SED STEP 4: SW ==="
+          sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' dist/index.html
+          echo "=== 404 ==="
+          cp dist/index.html dist/404.html
+          echo "=== PWA assets ==="
+          cp public/manifest.json dist/ 2>/dev/null || echo "  no manifest"
+          cp public/icon-192.png dist/ 2>/dev/null || echo "  no icon-192"
+          cp public/icon-512.png dist/ 2>/dev/null || echo "  no icon-512"
+          echo "=== SW file ==="
+          printf 'self.addEventListener("install",(e)=>self.skipWaiting());\nself.addEventListener("activate",(e)=>e.waitUntil(clients.claim()));\nself.addEventListener("fetch",(e)=>e.respondWith(fetch(e.request)));\n' > dist/sw.js
+          echo "=== .nojekyll ==="
+          touch dist/.nojekyll
+          echo "=== VERIFICACAO ==="
+          grep -c 'location.hash' dist/index.html && echo "HASH OK" || echo "HASH NAO ENCONTRADO!"
+          head -10 dist/index.html
 
       - name: Push to gh-pages
         run: |
-          cd "${{ github.workspace }}/dist"
+          cd dist
           git init
           git config user.name "saudedogueto"
           git config user.email "saudedogueto@users.noreply.github.com"
