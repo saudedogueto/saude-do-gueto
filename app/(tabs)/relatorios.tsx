@@ -5,12 +5,14 @@ import {
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useVisitas, Visita } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
 import { router } from 'expo-router';
 
 export default function RelatoriosScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
   const { visitas, carregarVisitas } = useVisitas();
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [periodo, setPeriodo] = useState<'geral' | 'mes' | 'semana'>('geral');
 
   useEffect(() => {
@@ -104,8 +106,8 @@ export default function RelatoriosScreen() {
         message: csv,
         title: 'Relatório Saúde do Gueto - Completo',
       });
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível exportar os dados');
+    } catch {
+      showToast('Erro ao exportar dados', 'error');
     }
   };
 

@@ -6,6 +6,8 @@ import {
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useFamilias, Familia } from '@/src/contexts/FamiliaContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
+import { ConfirmDialog } from '@/src/components/ConfirmDialog';
 import { router } from 'expo-router';
 
 export default function FamiliasScreen() {
@@ -15,6 +17,7 @@ export default function FamiliasScreen() {
     atualizarFamilia, adicionarMembro, removerMembro, excluirFamilia
   } = useFamilias();
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [salvando, setSalvando] = useState(false);
 
   // ─── Form de família ──────────────────────────────
@@ -99,7 +102,7 @@ export default function FamiliasScreen() {
   // ─── Salvar (criar ou editar) ────────────────────────
   const handleSalvarFamilia = async () => {
     if (!nomeResp.trim() || !endereco.trim()) {
-      Alert.alert('Atenção', 'Nome do responsável e endereço são obrigatórios');
+      showToast('Nome do responsável e endereço são obrigatórios', 'warning');
       return;
     }
     setSalvando(true);
@@ -113,7 +116,7 @@ export default function FamiliasScreen() {
           microarea: microarea.trim(),
           telefone: telefone.trim(),
         });
-        Alert.alert('Atualizado!', 'Dados da família atualizados com sucesso');
+        showToast('Família atualizada com sucesso!');
       } else {
         // Criar
         const familiaId = await criarFamilia({
@@ -126,12 +129,12 @@ export default function FamiliasScreen() {
         if (respSelecionado) {
           await adicionarMembro(familiaId, respSelecionado.id);
         }
-        Alert.alert('Família criada!', 'Nova família registrada com sucesso');
+        showToast('Família cadastrada com sucesso!');
       }
       resetForm();
       carregarFamilias();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar a família');
+      showToast('Erro ao salvar família', 'error');
     } finally {
       setSalvando(false);
     }
@@ -154,25 +157,14 @@ export default function FamiliasScreen() {
     await adicionarMembro(familiaId, pacienteId);
     setBuscasMembros(prev => ({ ...prev, [familiaId]: '' }));
     carregarFamilias();
+    showToast('Membro adicionado à família');
   };
 
   // ─── Excluir família ─────────────────────────────────
+  const [excluirConfirm, setExcluirConfirm] = useState<Familia | null>(null);
+  
   const handleExcluirFamilia = (familia: Familia) => {
-    Alert.alert(
-      'Excluir Família',
-      `Tem certeza que deseja excluir a família de ${familia.nomeResponsavel}?\n${familia.membros.length} membro(s) serão desvinculados.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            await excluirFamilia(familia.id);
-            carregarFamilias();
-          }
-        }
-      ]
-    );
+    setExcluirConfirm(familia);
   };
 
   return (
@@ -451,6 +443,23 @@ export default function FamiliasScreen() {
       )}
 
       <View style={{ height: 40 }} />
+
+      <ConfirmDialog
+        visivel={excluirConfirm !== null}
+        titulo="Excluir Família"
+        mensagem={`Tem certeza que deseja excluir a família de ${excluirConfirm?.nomeResponsavel}?\n${excluirConfirm?.membros.length || 0} membro(s) serão desvinculados.`}
+        confirmarTexto="Excluir"
+        tipo="danger"
+        onConfirmar={async () => {
+          if (excluirConfirm) {
+            await excluirFamilia(excluirConfirm.id);
+            carregarFamilias();
+            showToast('Família excluída');
+          }
+          setExcluirConfirm(null);
+        }}
+        onCancelar={() => setExcluirConfirm(null)}
+      />
     </ScrollView>
   );
 }

@@ -21,6 +21,7 @@ export default function VisitaScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
   const { salvarVisita } = useVisitas();
   const { cores } = useTema();
+  const { showToast } = useToast();
   const [salvando, setSalvando] = useState(false);
   const [mostrarPacientes, setMostrarPacientes] = useState(false);
 
@@ -55,7 +56,7 @@ export default function VisitaScreen() {
 
   const handleSalvar = async () => {
     if (!pacienteId) {
-      Alert.alert('Atenção', 'Selecione um paciente');
+      showToast('Selecione um paciente', 'warning');
       return;
     }
 
@@ -81,11 +82,10 @@ export default function VisitaScreen() {
           await adicionarLembrete(pacienteId, pacienteNome, proximaVisita, hora, 'retorno');
         } catch {}
       }
-      Alert.alert('Visita Registrada!', 'Visita domiciliar salva com sucesso.', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+      showToast('Visita registrada com sucesso!');
+      setTimeout(() => router.back(), 600);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar a visita');
+      showToast('Erro ao salvar visita', 'error');
     } finally {
       setSalvando(false);
     }
