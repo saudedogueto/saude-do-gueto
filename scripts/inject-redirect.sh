@@ -1,53 +1,48 @@
 #!/bin/bash
 # Post-processes dist/ for GitHub Pages SPA deployment
-# Usage: inject-redirect.sh <path/to/index.html> [project-dir]
-set -e
+set -euo pipefail
 
-FILE="$1"
-DIR="$(dirname "$FILE")"
+DIST="$1"
 PROJECT_DIR="${2:-$PWD}"
 
-echo "=== Preparando deploy para GitHub Pages ==="
+echo "=== Preparando $DIST para GitHub Pages ==="
 
-# 1) Fix absolute paths to relative
-sed -i 's|src="/_expo/|src="./_expo/|g' "$FILE"
-echo "  [OK] Paths relativizados"
+cd "$DIST"
 
-# 2) Inject hash-redirect before </head>
-LINE='<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script>'
-sed -i "s|</head>|${LINE}</head>|" "$FILE"
-echo "  [OK] Hash-redirect injetado"
+# Paths relativos
+sed -i 's|src="/_expo/|src="./_expo/|g' index.html
 
-# 3) Inject manifest + theme-color
-sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' "$FILE"
-echo "  [OK] Manifest injetado"
+# Hash redirect (SPA)
+sed -i 's|</head>|<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script></head>|' index.html
 
-# 4) Inject SW registrator
-sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' "$FILE"
-echo "  [OK] SW registrado"
+# PWA manifest + theme-color
+sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' index.html
 
-# 5) 404.html = index.html
-cp "$FILE" "$DIR/404.html"
-echo "  [OK] 404.html criado"
+# Service worker registration
+sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' index.html
 
-# 6) Copy PWA assets from public/ to dist/
-cp "$PROJECT_DIR/public/manifest.json" "$DIR/" 2>/dev/null && echo "  [OK] manifest.json copiado" || echo "  [!!] manifest.json NAO encontrado"
-cp "$PROJECT_DIR/public/icon-192.png" "$DIR/" 2>/dev/null && echo "  [OK] icon-192.png copiado" || echo "  [!!] icon-192.png NAO encontrado"
-cp "$PROJECT_DIR/public/icon-512.png" "$DIR/" 2>/dev/null && echo "  [OK] icon-512.png copiado" || echo "  [!!] icon-512.png NAO encontrado"
+# 404.html = index.html
+cp index.html 404.html
 
-# 7) Create minimal sw.js
-cat > "$DIR/sw.js" << 'EOF'
+# PWA assets from project public/
+cp "$PROJECT_DIR/public/manifest.json" . 2>/dev/null && echo "  manifest.json OK" || echo "  manifest.json NOT FOUND"
+cp "$PROJECT_DIR/public/icon-192.png" . 2>/dev/null && echo "  icon-192.png OK" || echo "  icon-192.png NOT FOUND"
+cp "$PROJECT_DIR/public/icon-512.png" . 2>/dev/null && echo "  icon-512.png OK" || echo "  icon-512.png NOT FOUND"
+
+# Service worker minimal
+cat > sw.js << 'SWEOF'
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
-EOF
-echo "  [OK] sw.js criado"
+SWEOF
+echo "  sw.js OK"
 
-# 8) .nojekyll
-touch "$DIR/.nojekyll"
+# .nojekyll
+touch .nojekyll
+echo "  .nojekyll OK"
 
 echo ""
-echo "=== Conteudo de $DIR ==="
-ls -la "$DIR/"
+echo "=== Conteudo de $(pwd) ==="
+ls -la
 echo ""
-echo "=== Deploy preparado ==="
+echo "=== Deploy preparado com sucesso ==="
