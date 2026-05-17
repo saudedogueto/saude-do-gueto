@@ -13,9 +13,17 @@ cd "$DIST" || { echo "ERRO: nao encontrou $DIST"; exit 1; }
 sed -i 's|src="/_expo/|src="./_expo/|g' index.html
 echo "  [OK] Paths relativizados"
 
-# 2) Injetar hash redirect NO INICIO do <head> (primeiro <meta>)
-#    Usando um marcador simples para evitar problemas com regex complexo
-sed -i 's|<meta charset|<script>if(!location.hash||location.hash=="#/"||location.hash=="#"){location.replace(location.href.replace(/#.*$/,"")+"#/(tabs)/dashboard")}</script>\n<meta charset|' index.html
+# 2) Injetar hash redirect via python (escape seguro)
+python3 -c "
+import re
+with open('index.html','r') as f:
+    html = f.read()
+# Inject hash redirect after <head>
+script = '<script>if(!location.hash||location.hash==\"#/\"||location.hash==\"#\"){location.replace(location.href.replace(/#.*\$/,\"\")+\"#/(tabs)/dashboard\")}</script>'
+html = html.replace('<head>', '<head>' + script)
+with open('index.html','w') as f:
+    f.write(html)
+"
 echo "  [OK] Hash redirect injetado"
 
 # 3) PWA manifest + theme-color no <head>
@@ -31,26 +39,14 @@ cp index.html 404.html
 echo "  [OK] 404.html criado"
 
 # 6) PWA assets from project public/
-if [ -f "$PROJECT_DIR/public/manifest.json" ]; then
-  cp "$PROJECT_DIR/public/manifest.json" .
-  echo "  [OK] manifest.json copiado"
-else
-  echo "  [!!] manifest.json NAO encontrado"
-fi
-
-if [ -f "$PROJECT_DIR/public/icon-192.png" ]; then
-  cp "$PROJECT_DIR/public/icon-192.png" .
-  echo "  [OK] icon-192.png copiado"
-else
-  echo "  [!!] icon-192.png NAO encontrado"
-fi
-
-if [ -f "$PROJECT_DIR/public/icon-512.png" ]; then
-  cp "$PROJECT_DIR/public/icon-512.png" .
-  echo "  [OK] icon-512.png copiado"
-else
-  echo "  [!!] icon-512.png NAO encontrado"
-fi
+for f in manifest.json icon-192.png icon-512.png; do
+  if [ -f "$PROJECT_DIR/public/$f" ]; then
+    cp "$PROJECT_DIR/public/$f" .
+    echo "  [OK] $f copiado"
+  else
+    echo "  [!!] $f NAO encontrado"
+  fi
+done
 
 # 7) Service worker minimal
 cat > sw.js << 'SWEOF'
