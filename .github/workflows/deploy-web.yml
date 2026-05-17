@@ -23,7 +23,17 @@ jobs:
       - name: Build web
         run: npx expo export --platform web
 
-      - name: Copy to root and push to gh-pages
+      - name: Prepare for GitHub Pages
+        run: |
+          # Corrigir o index.html para usar paths relativos
+          cd dist
+          sed -i 's|src="/_expo/|src="./_expo/|g' index.html
+          # Copiar index.html como 404.html para roteamento SPA
+          cp index.html 404.html
+          # Criar .nojekyll para evitar que GitHub ignore pastas com underscore
+          touch .nojekyll
+
+      - name: Push to gh-pages
         run: |
           cd dist
           git init
