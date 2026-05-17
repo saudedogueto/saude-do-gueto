@@ -27,7 +27,7 @@ jobs:
         run: |
           # Executar script de redirect (corrige paths, injeta hash-redirect, copia 404.html)
           chmod +x "$GITHUB_WORKSPACE/scripts/inject-redirect.sh"
-          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" dist/index.html
+          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" dist/index.html "$GITHUB_WORKSPACE"
           
           # Verificar se o script inseriu o redirect
           if ! grep -q 'window.location.hash' dist/index.html; then
