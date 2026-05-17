@@ -1,26 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, FlatList, Alert
+  ScrollView, FlatList, Alert, Image
 } from 'react-native';
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
-import { useFamilias } from '@/src/contexts/FamiliaContext';
+import { useFamilias, Familia } from '@/src/contexts/FamiliaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router } from 'expo-router';
 
 export default function FamiliasScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
-  const { familias, carregarFamilias, criarFamilia, adicionarMembro, removerMembro } = useFamilias();
+  const {
+    familias, carregarFamilias, criarFamilia,
+    atualizarFamilia, adicionarMembro, removerMembro, excluirFamilia
+  } = useFamilias();
   const { cores } = useTema();
-  const [criando, setCriando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
-  // ─── Form de nova família ───────────────────────────
+  // ─── Form de família ──────────────────────────────
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [editandoFamiliaId, setEditandoFamiliaId] = useState<string | null>(null);
   const [nomeResp, setNomeResp] = useState('');
   const [sugestoesResp, setSugestoesResp] = useState<Paciente[]>([]);
   const [respSelecionado, setRespSelecionado] = useState<Paciente | null>(null);
   const enderecoRef = useRef<TextInput>(null);
   const [endereco, setEndereco] = useState('');
+  const [bairro, setBairro] = useState('');
   const [microarea, setMicroarea] = useState('');
   const [telefone, setTelefone] = useState('');
 
@@ -39,6 +44,19 @@ export default function FamiliasScreen() {
     carregarPacientes();
   }, []);
 
+  // ─── Abrir formulário para editar ────────────────────
+  const abrirEdicao = useCallback((familia: Familia) => {
+    setEditandoFamiliaId(familia.id);
+    setNomeResp(familia.nomeResponsavel);
+    setEndereco(familia.endereco);
+    setBairro(familia.bairro || '');
+    setMicroarea(familia.microarea);
+    setTelefone(familia.telefone);
+    setRespSelecionado(null);
+    setSugestoesResp([]);
+    setMostrarForm(true);
+  }, []);
+
   // ─── Autocomplete do responsável ─────────────────────
   const handleNomeRespChange = useCallback((texto: string) => {
     setNomeResp(texto);
@@ -46,7 +64,7 @@ export default function FamiliasScreen() {
     if (texto.trim().length >= 1) {
       const t = texto.toLowerCase();
       const encontrados = pacientes.filter(p => p.nome.toLowerCase().includes(t));
-      setSugestoesResp(encontrados.slice(0, 8)); // max 8 sugestões
+      setSugestoesResp(encontrados.slice(0, 8));
     } else {
       setSugestoesResp([]);
     }
@@ -56,10 +74,12 @@ export default function FamiliasScreen() {
     setRespSelecionado(paciente);
     setNomeResp(paciente.nome);
     setSugestoesResp([]);
-    // Se o paciente já tem endereço, preenche automaticamente
-    if (paciente.endereco) setEndereco(paciente.endereco);
-    if (paciente.microarea) setMicroarea(paciente.microarea);
-    if (paciente.telefone) setTelefone(paciente.telefone);
+    // Preenche TODOS os campos com os dados do paciente
+    const micro = paciente.microareaProntuario || paciente.microarea || '';
+    setEndereco(paciente.endereco || '');
+    setBairro('');
+    setMicroarea(micro);
+    setTelefone(paciente.telefone || '');
     enderecoRef.current?.focus();
   }, []);
 
@@ -76,49 +96,57 @@ export default function FamiliasScreen() {
     );
   }, [buscasMembros, pacientesDisponiveis]);
 
-  // ─── Criar família ───────────────────────────────────
-  const handleCriarFamilia = async () => {
+  // ─── Salvar (criar ou editar) ────────────────────────
+  const handleSalvarFamilia = async () => {
     if (!nomeResp.trim() || !endereco.trim()) {
       Alert.alert('Atenção', 'Nome do responsável e endereço são obrigatórios');
       return;
     }
-    setCriando(true);
+    setSalvando(true);
     try {
-      const familiaId = await criarFamilia({
-        nomeResponsavel: nomeResp.trim(),
-        endereco: endereco.trim(),
-        microarea: microarea.trim(),
-        telefone: telefone.trim(),
-      });
-      // Se selecionou um paciente existente como responsável, já adiciona como membro
-      if (respSelecionado) {
-        await adicionarMembro(familiaId, respSelecionado.id);
+      if (editandoFamiliaId) {
+        // Editar
+        await atualizarFamilia(editandoFamiliaId, {
+          nomeResponsavel: nomeResp.trim(),
+          endereco: endereco.trim(),
+          bairro: bairro.trim(),
+          microarea: microarea.trim(),
+          telefone: telefone.trim(),
+        });
+        Alert.alert('Atualizado!', 'Dados da família atualizados com sucesso');
+      } else {
+        // Criar
+        const familiaId = await criarFamilia({
+          nomeResponsavel: nomeResp.trim(),
+          endereco: endereco.trim(),
+          bairro: bairro.trim(),
+          microarea: microarea.trim(),
+          telefone: telefone.trim(),
+        });
+        if (respSelecionado) {
+          await adicionarMembro(familiaId, respSelecionado.id);
+        }
+        Alert.alert('Família criada!', 'Nova família registrada com sucesso');
       }
-      Alert.alert('Família criada!', 'Nova família registrada com sucesso');
-      // Reset do formulário
-      setNomeResp('');
-      setEndereco('');
-      setMicroarea('');
-      setTelefone('');
-      setRespSelecionado(null);
-      setSugestoesResp([]);
-      setMostrarForm(false);
+      resetForm();
       carregarFamilias();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível criar a família');
+      Alert.alert('Erro', 'Não foi possível salvar a família');
     } finally {
-      setCriando(false);
+      setSalvando(false);
     }
   };
 
-  const cancelarForm = () => {
-    setMostrarForm(false);
+  const resetForm = () => {
     setNomeResp('');
     setEndereco('');
+    setBairro('');
     setMicroarea('');
     setTelefone('');
     setRespSelecionado(null);
     setSugestoesResp([]);
+    setMostrarForm(false);
+    setEditandoFamiliaId(null);
   };
 
   // ─── Adicionar membro ────────────────────────────────
@@ -126,6 +154,25 @@ export default function FamiliasScreen() {
     await adicionarMembro(familiaId, pacienteId);
     setBuscasMembros(prev => ({ ...prev, [familiaId]: '' }));
     carregarFamilias();
+  };
+
+  // ─── Excluir família ─────────────────────────────────
+  const handleExcluirFamilia = (familia: Familia) => {
+    Alert.alert(
+      'Excluir Família',
+      `Tem certeza que deseja excluir a família de ${familia.nomeResponsavel}?\n${familia.membros.length} membro(s) serão desvinculados.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            await excluirFamilia(familia.id);
+            carregarFamilias();
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -139,51 +186,85 @@ export default function FamiliasScreen() {
       {!mostrarForm ? (
         <TouchableOpacity
           style={styles.btnCriar}
-          onPress={() => setMostrarForm(true)}
+          onPress={() => { resetForm(); setMostrarForm(true); }}
         >
           <Text style={styles.btnCriarText}>+ Nova Família</Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nova Família</Text>
+          <Text style={styles.formTitle}>
+            {editandoFamiliaId ? '✏️ Editar Família' : 'Nova Família'}
+          </Text>
 
-          {/* Responsável com autocomplete */}
-          <View style={styles.autocompleteWrapper}>
+          {/* Se está editando, não mostra autocomplete de pacientes */}
+          {!editandoFamiliaId && (
+            <View style={styles.autocompleteWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome do responsável *"
+                value={nomeResp}
+                onChangeText={handleNomeRespChange}
+              />
+              {sugestoesResp.length > 0 && (
+                <View style={styles.sugestoesBox}>
+                  {sugestoesResp.map(p => (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={styles.sugestaoItem}
+                      onPress={() => selecionarResponsavel(p)}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {p.foto ? (
+                          <Image source={{ uri: p.foto }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
+                        ) : (
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
+                            <Text style={{ fontSize: 14 }}>👤</Text>
+                          </View>
+                        )}
+                        <Text style={styles.sugestaoNome}>{p.nome}</Text>
+                      </View>
+                      <Text style={styles.sugestaoInfo}>
+                        {p.dataNascimento ? `🎂 ${p.dataNascimento}` : ''}
+                        {p.endereco ? ` • 📍 ${p.endereco}` : ''}
+                      </Text>
+                      {(p.microareaProntuario || p.microarea) && (
+                        <Text style={styles.sugestaoInfo}>
+                          🏷️ {p.microareaProntuario || p.microarea}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {editandoFamiliaId && (
             <TextInput
               style={styles.input}
               placeholder="Nome do responsável *"
               value={nomeResp}
-              onChangeText={handleNomeRespChange}
+              onChangeText={setNomeResp}
+              autoCapitalize="words"
             />
-            {sugestoesResp.length > 0 && (
-              <View style={styles.sugestoesBox}>
-                {sugestoesResp.map(p => (
-                  <TouchableOpacity
-                    key={p.id}
-                    style={styles.sugestaoItem}
-                    onPress={() => selecionarResponsavel(p)}
-                  >
-                    <Text style={styles.sugestaoNome}>{p.nome}</Text>
-                    <Text style={styles.sugestaoInfo}>
-                      {p.endereco ? `📍 ${p.endereco}` : ''}
-                      {p.microarea ? ` • 🏷️ ${p.microarea}` : ''}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+          )}
 
           <TextInput
             ref={enderecoRef}
             style={styles.input}
-            placeholder="Endereço completo *"
+            placeholder="Endereço (rua, número) *"
             value={endereco}
             onChangeText={setEndereco}
           />
           <TextInput
             style={styles.input}
-            placeholder="Microárea"
+            placeholder="Bairro"
+            value={bairro}
+            onChangeText={setBairro}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Microárea / Prontuário"
             value={microarea}
             onChangeText={setMicroarea}
           />
@@ -198,16 +279,16 @@ export default function FamiliasScreen() {
           <View style={styles.formActions}>
             <TouchableOpacity
               style={[styles.btn, styles.btnSalvar]}
-              onPress={handleCriarFamilia}
-              disabled={criando}
+              onPress={handleSalvarFamilia}
+              disabled={salvando}
             >
               <Text style={styles.btnSalvarText}>
-                {criando ? 'Criando...' : 'Criar Família'}
+                {salvando ? 'Salvando...' : editandoFamiliaId ? '💾 Salvar' : 'Criar Família'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btn, styles.btnCancelar]}
-              onPress={cancelarForm}
+              onPress={resetForm}
             >
               <Text style={styles.btnCancelarText}>Cancelar</Text>
             </TouchableOpacity>
@@ -223,14 +304,35 @@ export default function FamiliasScreen() {
 
         const termoBusca = buscasMembros[familia.id] || '';
         const resultadosBusca = getPacientesFiltrados(familia.id);
+        const podeAdicionar = pacientesDisponiveis.length > 0;
 
         return (
           <View key={familia.id} style={styles.familiaCard}>
+            {/* Header com ações */}
             <View style={styles.familiaHeader}>
-              <Text style={styles.familiaNome}>👤 {familia.nomeResponsavel}</Text>
-              <Text style={styles.familiaInfo}>📍 {familia.endereco}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Text style={styles.familiaNome}>👤 {familia.nomeResponsavel}</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => abrirEdicao(familia)}
+                    style={styles.headerAction}
+                  >
+                    <Text style={styles.headerActionText}>✏️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleExcluirFamilia(familia)}
+                    style={styles.headerAction}
+                  >
+                    <Text style={{ fontSize: 16, color: '#E53935' }}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text style={styles.familiaInfo}>📍 {familia.endereco}{familia.bairro ? ` - ${familia.bairro}` : ''}</Text>
               {familia.microarea ? (
-                <Text style={styles.familiaInfo}>🏷️ Área: {familia.microarea}</Text>
+                <Text style={styles.familiaInfo}>🏷️ Microárea/Prontuário: {familia.microarea}</Text>
+              ) : null}
+              {familia.telefone ? (
+                <Text style={styles.familiaInfo}>📞 {familia.telefone}</Text>
               ) : null}
             </View>
 
@@ -242,7 +344,23 @@ export default function FamiliasScreen() {
                 </Text>
                 {membros.map(m => (
                   <View key={m.id} style={styles.membroItem}>
-                    <Text style={styles.membroNome}>{m.nome}</Text>
+                    <TouchableOpacity
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => router.push({ pathname: '/(tabs)/detalhes', params: { id: m.id } })}
+                    >
+                      {m.foto ? (
+                        <Image source={{ uri: m.foto }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
+                      ) : (
+                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
+                          <Text style={{ fontSize: 14 }}>👤</Text>
+                        </View>
+                      )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.membroNome}>{m.nome}</Text>
+                        {m.dataNascimento && <Text style={{ fontSize: 11, color: '#999' }}>🎂 {m.dataNascimento}</Text>}
+                        {(m.microareaProntuario || m.microarea) && <Text style={{ fontSize: 11, color: '#999' }}>🏷️ {m.microareaProntuario || m.microarea}</Text>}
+                      </View>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
                         Alert.alert('Remover', `Remover ${m.nome} da família?`, [
@@ -265,37 +383,61 @@ export default function FamiliasScreen() {
               </View>
             )}
 
-            {/* Busca de membros (só pacientes disponíveis) */}
-            <TextInput
-              style={styles.buscaInput}
-              placeholder="🔍 Adicionar paciente pelo nome..."
-              value={termoBusca}
-              onChangeText={texto => handleBuscaMembroChange(familia.id, texto)}
-            />
-
-            {termoBusca.length > 0 && resultadosBusca.length > 0 && (
-              <View style={styles.resultadosBusca}>
-                {resultadosBusca.map(p => (
-                  <TouchableOpacity
-                    key={p.id}
-                    style={styles.pacienteItem}
-                    onPress={() => handleAdicionarMembro(familia.id, p.id)}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.pacienteItemNome}>{p.nome}</Text>
-                      <Text style={styles.pacienteItemInfo}>
-                        {p.endereco ? `📍 ${p.endereco}` : ''}
-                        {p.microarea ? ` • 🏷️ ${p.microarea}` : ''}
-                      </Text>
-                    </View>
-                    <Text style={styles.pacienteItemAdd}>+</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+            {membros.length === 0 && (
+              <Text style={styles.semMembros}>Nenhum membro vinculado ainda</Text>
             )}
 
-            {termoBusca.length > 0 && resultadosBusca.length === 0 && (
-              <Text style={styles.semResultados}>Nenhum paciente disponível com esse nome</Text>
+            {/* Busca de membros (só pacientes disponíveis) */}
+            {podeAdicionar ? (
+              <>
+                <TextInput
+                  style={styles.buscaInput}
+                  placeholder="🔍 Adicionar paciente pelo nome..."
+                  value={termoBusca}
+                  onChangeText={texto => handleBuscaMembroChange(familia.id, texto)}
+                />
+
+                {termoBusca.length > 0 && resultadosBusca.length > 0 && (
+                  <View style={styles.resultadosBusca}>
+                    {resultadosBusca.map(p => (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={styles.pacienteItem}
+                        onPress={() => handleAdicionarMembro(familia.id, p.id)}
+                      >
+                        {p.foto ? (
+                          <Image source={{ uri: p.foto }} style={styles.pacienteItemFoto} />
+                        ) : (
+                          <View style={styles.pacienteItemFotoPlaceholder}>
+                            <Text style={styles.pacienteItemFotoEmoji}>👤</Text>
+                          </View>
+                        )}
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                          <Text style={styles.pacienteItemNome}>{p.nome}</Text>
+                          <Text style={styles.pacienteItemInfo}>
+                            {p.dataNascimento ? `🎂 ${p.dataNascimento} • ` : ''}
+                            {p.endereco ? `📍 ${p.endereco}` : ''}
+                          </Text>
+                          {(p.microareaProntuario || p.microarea) && (
+                            <Text style={styles.pacienteItemInfo}>
+                              🏷️ {p.microareaProntuario || p.microarea}
+                            </Text>
+                          )}
+                        </View>
+                        <Text style={styles.pacienteItemAdd}>+</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {termoBusca.length > 0 && resultadosBusca.length === 0 && (
+                  <Text style={styles.semResultados}>Nenhum paciente disponível com esse nome</Text>
+                )}
+              </>
+            ) : (
+              <Text style={styles.semResultados}>
+                ✅ Todos os pacientes já estão vinculados a alguma família
+              </Text>
             )}
           </View>
         );
@@ -450,10 +592,17 @@ const styles = StyleSheet.create({
   familiaHeader: {
     marginBottom: 12,
   },
+  headerAction: {
+    padding: 4,
+  },
+  headerActionText: {
+    fontSize: 16,
+  },
   familiaNome: {
     fontSize: 17,
     fontWeight: 'bold',
     color: '#222',
+    flex: 1,
   },
   familiaInfo: {
     fontSize: 13,
@@ -492,6 +641,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 4,
   },
+  semMembros: {
+    fontSize: 12,
+    color: '#CCC',
+    textAlign: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
 
   // ─── Busca ───────────────────────────────────────
   buscaInput: {
@@ -518,6 +675,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     backgroundColor: '#FAFAFA',
+  },
+  pacienteItemFoto: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
+  },
+  pacienteItemFotoPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  pacienteItemFotoEmoji: {
+    fontSize: 16,
   },
   pacienteItemNome: {
     fontSize: 14,

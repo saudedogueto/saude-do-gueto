@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, FlatList, TouchableOpacity,
-  StyleSheet, Alert
+  StyleSheet, Alert, Image
 } from 'react-native';
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router } from 'expo-router';
 
-type FiltroCondicao = 'todos' | 'hipertensao' | 'diabetes' | 'gestante';
+type FiltroCondicao = 'todos' | 'hipertensao' | 'diabetes' | 'gestante' | 'menorDoisAnos';
 
 export default function ListaScreen() {
   const { pacientes, carregarPacientes, pesquisarPacientes, excluirPaciente } = usePacientes();
@@ -29,6 +29,8 @@ export default function ListaScreen() {
       lista = lista.filter(p => p.diabetes);
     } else if (filtro === 'gestante') {
       lista = lista.filter(p => p.gestante);
+    } else if (filtro === 'menorDoisAnos') {
+      lista = lista.filter(p => p.menorDoisAnos);
     }
 
     setResultados(lista);
@@ -61,20 +63,30 @@ export default function ListaScreen() {
       })}
       onLongPress={() => handleExcluir(item)}
     >
-      <View style={styles.cardHeader}>
-        <Text style={styles.nome}>{item.nome}</Text>
-        <Text style={styles.sus}>CPF: {item.cpf || '---'}</Text>
+      <View style={styles.cardRow}>
+        {item.foto ? (
+          <Image source={{ uri: item.foto }} style={styles.fotoCard} />
+        ) : (
+          <View style={styles.fotoCardPlaceholder}>
+            <Text style={styles.fotoCardEmoji}>👤</Text>
+          </View>
+        )}
+        <View style={styles.cardInfo}>
+          <Text style={styles.nome}>{item.nome}</Text>
+          <Text style={styles.sus}>CPF: {item.cpf || '---'}</Text>
+        </View>
       </View>
 
       <View style={styles.tags}>
         {item.hipertensao && <Text style={[styles.tag, { backgroundColor: '#FFF3E0', color: '#E65100' }]}>HAS</Text>}
         {item.diabetes && <Text style={[styles.tag, { backgroundColor: '#E8F5E9', color: '#2E7D32' }]}>DM</Text>}
         {item.gestante && <Text style={[styles.tag, { backgroundColor: '#FCE4EC', color: '#C62828' }]}>GEST</Text>}
+        {item.menorDoisAnos && <Text style={[styles.tag, { backgroundColor: '#FFF8E1', color: '#F57F17' }]}>{'👶 <2A'}</Text>}
       </View>
 
       {item.telefone ? <Text style={styles.info}>📞 {item.telefone}</Text> : null}
       {item.endereco ? <Text style={styles.info}>🏠 {item.endereco}</Text> : null}
-      {item.microarea ? <Text style={styles.info}>📍 {item.microarea}</Text> : null}
+      {(item.microareaProntuario || item.microarea) ? <Text style={styles.info}>📍 {item.microareaProntuario || item.microarea}</Text> : null}
     </TouchableOpacity>
   );
 
@@ -87,6 +99,7 @@ export default function ListaScreen() {
           { key: 'hipertensao', label: '🫀 HAS' },
           { key: 'diabetes', label: '🩸 DM' },
           { key: 'gestante', label: '🤰 GEST' },
+          { key: 'menorDoisAnos', label:  '👶 <2A' },
         ].map(f => (
           <TouchableOpacity
             key={f.key}
@@ -164,6 +177,36 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     marginBottom: 8,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  fotoCard: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
+  },
+  fotoCardPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 12,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  fotoCardEmoji: {
+    fontSize: 20,
+  },
+  cardInfo: {
+    flex: 1,
   },
   nome: {
     fontSize: 17,
