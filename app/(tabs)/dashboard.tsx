@@ -54,11 +54,6 @@ export default function DashboardScreen() {
         <>
           <DashboardStats />
 
-          <View style={styles.cardTotal}>
-            <Text style={styles.cardTotalNumero}>{pacientes.length}</Text>
-            <Text style={styles.cardTotalLabel}>Total de Pacientes</Text>
-          </View>
-
           <View style={styles.grid}>
             <View style={[styles.card, { backgroundColor: '#FFF3E0' }]}>
               <Text style={styles.cardNumero}>{hipertensos}</Text>
