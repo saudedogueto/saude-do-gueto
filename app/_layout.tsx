@@ -14,6 +14,7 @@ export default function RootLayout() {
         <VisitaProvider>
         <FamiliaProvider>
         <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
         </Stack>
         </FamiliaProvider>
