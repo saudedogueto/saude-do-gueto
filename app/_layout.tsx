@@ -13,7 +13,7 @@ export default function RootLayout() {
       <PacienteProvider>
         <VisitaProvider>
         <FamiliaProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
         </Stack>
