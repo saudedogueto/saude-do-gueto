@@ -25,18 +25,7 @@ jobs:
 
       - name: Prepare for GitHub Pages
         run: |
-          cd dist
-          sed -i 's|src="/_expo/|src="./_expo/|g' index.html
-          sed -i 's|</head>|<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script></head>|' index.html
-          sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' index.html
-          sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' index.html
-          cp index.html 404.html
-          cp ${{ github.workspace }}/public/manifest.json . || true
-          cp ${{ github.workspace }}/public/icon-192.png . || true
-          cp ${{ github.workspace }}/public/icon-512.png . || true
-          printf 'self.addEventListener("install",(e)=>self.skipWaiting());\nself.addEventListener("activate",(e)=>e.waitUntil(clients.claim()));\nself.addEventListener("fetch",(e)=>e.respondWith(fetch(e.request)));\n' > sw.js
-          touch .nojekyll
-          ls -la
+          bash scripts/inject-redirect.sh dist
 
       - name: Push to gh-pages
         run: |
