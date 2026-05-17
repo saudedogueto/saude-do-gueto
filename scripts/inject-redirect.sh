@@ -9,32 +9,33 @@ echo "=== Preparando $DIST para GitHub Pages ==="
 
 cd "$DIST" || { echo "ERRO: nao encontrou $DIST"; exit 1; }
 
-# Paths relativos
+# 1) Paths absolutos -> relativos
 sed -i 's|src="/_expo/|src="./_expo/|g' index.html
 echo "  [OK] Paths relativizados"
 
-# Hash redirect (SPA)
-sed -i 's|</head>|<script>if(!window.location.hash||"#/"===window.location.hash||"#"===window.location.hash){window.location.replace(window.location.href.replace(/#*$/,"")+"#/(tabs)/dashboard")}</script></head>|' index.html
-echo "  [OK] Hash redirect"
+# 2) Injetar hash redirect NO INICIO do <head> (primeiro <meta>)
+#    Usando um marcador simples para evitar problemas com regex complexo
+sed -i 's|<meta charset|<script>if(!location.hash||location.hash=="#/"||location.hash=="#"){location.replace(location.href.replace(/#.*$/,"")+"#/(tabs)/dashboard")}</script>\n<meta charset|' index.html
+echo "  [OK] Hash redirect injetado"
 
-# PWA manifest + theme-color
+# 3) PWA manifest + theme-color no <head>
 sed -i 's|<title>|<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#FF8C00"><title>|' index.html
 echo "  [OK] Manifest injetado"
 
-# Service worker registration
+# 4) Service worker registration
 sed -i 's|</body>|<script>if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(e){console.warn("SW:",e)})})}</script></body>|' index.html
 echo "  [OK] SW registrado"
 
-# 404.html = index.html
+# 5) 404.html = index.html
 cp index.html 404.html
 echo "  [OK] 404.html criado"
 
-# PWA assets from project public/
+# 6) PWA assets from project public/
 if [ -f "$PROJECT_DIR/public/manifest.json" ]; then
   cp "$PROJECT_DIR/public/manifest.json" .
   echo "  [OK] manifest.json copiado"
 else
-  echo "  [!!] manifest.json NAO encontrado em $PROJECT_DIR/public/"
+  echo "  [!!] manifest.json NAO encontrado"
 fi
 
 if [ -f "$PROJECT_DIR/public/icon-192.png" ]; then
@@ -51,7 +52,7 @@ else
   echo "  [!!] icon-512.png NAO encontrado"
 fi
 
-# Service worker minimal
+# 7) Service worker minimal
 cat > sw.js << 'SWEOF'
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
@@ -59,7 +60,7 @@ self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
 SWEOF
 echo "  [OK] sw.js criado"
 
-# .nojekyll
+# 8) .nojekyll
 touch .nojekyll
 echo "  [OK] .nojekyll"
 
