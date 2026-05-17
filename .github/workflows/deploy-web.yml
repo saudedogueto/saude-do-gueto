@@ -26,8 +26,14 @@ jobs:
       - name: Prepare for GitHub Pages
         run: |
           cd dist
-          # Injetar redirect e corrigir paths
-          ../scripts/inject-redirect.sh index.html
+          # Garantir permissão e executar script de redirect
+          chmod +x "$GITHUB_WORKSPACE/scripts/inject-redirect.sh"
+          "$GITHUB_WORKSPACE/scripts/inject-redirect.sh" index.html
+          # Verificar se o script inseriu o redirect
+          if ! grep -q 'window.location.hash' index.html; then
+            echo "ERRO: script de redirect não foi inserido!"
+            exit 1
+          fi
           # Copiar index.html como 404.html para roteamento SPA
           cp index.html 404.html
           # Criar .nojekyll
