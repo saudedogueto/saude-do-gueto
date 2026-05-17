@@ -85,7 +85,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.atalho}
-              onPress={() => router.push('/(tabs)/pacientes')}
+              onPress={() => router.push('/(tabs)/lista')}
             >
               <Text style={styles.atalhoIcone}>📋</Text>
               <Text style={styles.atalhoTexto}>Pacientes</Text>
@@ -103,6 +103,34 @@ export default function DashboardScreen() {
             >
               <Text style={styles.atalhoIcone}>📊</Text>
               <Text style={styles.atalhoTexto}>Relatórios</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.atalho}
+              onPress={() => router.push('/(tabs)/mapa')}
+            >
+              <Text style={styles.atalhoIcone}>🗺️</Text>
+              <Text style={styles.atalhoTexto}>Mapa Social</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.atalho}
+              onPress={() => router.push('/(tabs)/esus-export')}
+            >
+              <Text style={styles.atalhoIcone}>💻</Text>
+              <Text style={styles.atalhoTexto}>e-SUS / SIS</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.atalho}
+              onPress={() => router.push('/(tabs)/lembretes')}
+            >
+              <Text style={styles.atalhoIcone}>🔔</Text>
+              <Text style={styles.atalhoTexto}>Lembretes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.atalho}
+              onPress={() => router.push('/(tabs)/config')}
+            >
+              <Text style={styles.atalhoIcone}>⚙️</Text>
+              <Text style={styles.atalhoTexto}>Configurações</Text>
             </TouchableOpacity>
           </View>
         </>
