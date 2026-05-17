@@ -89,7 +89,6 @@ export default function CadastroScreen() {
       if (result) {
         setEndereco(result.logradouro ? `${result.logradouro}, ` : '');
         setBairro(result.bairro);
-        if (!microareaProntuario) setMicroareaProntuario(result.bairro);
       } else {
         Alert.alert('CEP não encontrado', 'Verifique o número digitado.');
       }

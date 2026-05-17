@@ -5,6 +5,7 @@ export type Familia = {
   id: string;
   nomeResponsavel: string;
   endereco: string;
+  bairro?: string;
   microarea: string;
   telefone: string;
   membros: string[]; // ids dos pacientes
@@ -15,6 +16,7 @@ type FamiliaContextType = {
   familias: Familia[];
   carregarFamilias: () => Promise<void>;
   criarFamilia: (familia: Omit<Familia, 'id' | 'dataCriacao' | 'membros'>) => Promise<string>;
+  atualizarFamilia: (id: string, dados: Partial<Omit<Familia, 'id' | 'dataCriacao' | 'membros'>>) => Promise<void>;
   adicionarMembro: (familiaId: string, pacienteId: string) => Promise<void>;
   removerMembro: (familiaId: string, pacienteId: string) => Promise<void>;
   excluirFamilia: (id: string) => Promise<void>;
@@ -90,7 +92,20 @@ export function FamiliaProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const excluirFamilia = async (id: string) => {
+  const atualizarFamilia = async (id: string, dados: Partial<Omit<Familia, 'id' | 'dataCriacao' | 'membros'>>) => {
+    try {
+      const dadosStorage = await AsyncStorage.getItem('@familias');
+      let lista: Familia[] = dadosStorage ? JSON.parse(dadosStorage) : [];
+      lista = lista.map(f => f.id === id ? { ...f, ...dados } : f);
+      await AsyncStorage.setItem('@familias', JSON.stringify(lista));
+      setFamilias(lista);
+    } catch (error) {
+      console.error('Erro ao atualizar família:', error);
+      throw error;
+    }
+  };
+
+const excluirFamilia = async (id: string) => {
     try {
       const dados = await AsyncStorage.getItem('@familias');
       let lista: Familia[] = dados ? JSON.parse(dados) : [];
@@ -112,7 +127,7 @@ export function FamiliaProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <FamiliaContext.Provider value={{
-      familias, carregarFamilias, criarFamilia,
+      familias, carregarFamilias, criarFamilia, atualizarFamilia,
       adicionarMembro, removerMembro, excluirFamilia,
       buscarFamiliaPorPaciente, buscarFamiliasPorMicroarea
     }}>
