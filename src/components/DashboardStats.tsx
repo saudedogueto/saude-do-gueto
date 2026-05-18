@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFamiliaStore } from '../store/familiaStore';
 import { usePacienteStore } from '../store/pacienteStore';

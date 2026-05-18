@@ -55,6 +55,7 @@ async function initTables(database: any) {
       responsavel TEXT,
       comorbidades TEXT,
       observacoes TEXT,
+      foto TEXT,
       dataCadastro TEXT NOT NULL
     );
 
@@ -173,11 +174,12 @@ export async function criarPaciente(paciente: any): Promise<string> {
   const id = Date.now().toString();
   const dataCadastro = new Date().toISOString().split('T')[0];
   await database.runAsync(
-    `INSERT INTO pacientes (id, nome, dataNascimento, cpf, sus, microarea, endereco, telefone, responsavel, comorbidades, observacoes, dataCadastro)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+   \x60INSERT INTO pacientes (id, nome, dataNascimento, cpf, sus, microarea, endereco, telefone, responsavel, comorbidades, observacoes, foto, dataCadastro)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\x60,
     [id, paciente.nome, paciente.dataNascimento || null, paciente.cpf || null, paciente.sus || null,
      paciente.microarea || null, paciente.endereco || null, paciente.telefone || null,
-     paciente.responsavel || null, paciente.comorbidades || null, paciente.observacoes || null, dataCadastro]
+     paciente.responsavel || null, paciente.comorbidades || null, paciente.observacoes || null,
+     paciente.foto || null, dataCadastro]
   );
   return id;
 }

@@ -12,6 +12,7 @@ export interface Paciente {
   telefone?: string;
   responsavel?: string;
   comorbidades?: string;
+  foto?: string;
   observacoes?: string;
   dataCadastro: string;
 }
