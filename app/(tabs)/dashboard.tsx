@@ -94,6 +94,13 @@ export default function DashboardScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.atalho}
+              onPress={() => router.push('/(tabs)/visita')}
+            >
+              <Text style={styles.atalhoIcone}>👣</Text>
+              <Text style={styles.atalhoTexto}>Registrar Visita</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.atalho}
               onPress={() => router.push('/(tabs)/relatorios')}
             >
               <Text style={styles.atalhoIcone}>📊</Text>
