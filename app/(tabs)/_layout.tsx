@@ -62,14 +62,7 @@ export default function TabsLayout() {
           headerTintColor: '#FF8C00',
         }}
       />
-      <Stack.Screen
-        name="relatorios"
-        options={{
-          title: 'Relatórios',
-          headerBackTitle: 'Voltar',
-          headerTintColor: '#FF8C00',
-        }}
-      />
+
       <Stack.Screen
         name="familias"
         options={{
@@ -105,7 +98,7 @@ export default function TabsLayout() {
       <Stack.Screen
         name="esus-export"
         options={{
-          title: 'e-SUS / SIS Online',
+          title: '📊 Relatórios & e-SUS',
           headerBackTitle: 'Voltar',
           headerTintColor: '#FF8C00',
         }}
@@ -116,6 +109,16 @@ export default function TabsLayout() {
           title: '🗺️ Mapa Social',
           headerBackTitle: 'Voltar',
           headerTintColor: '#FF8C00',
+        }}
+      />
+      <Stack.Screen
+        name="agente"
+        options={{
+          title: '🧠 Agente de Saúde',
+          headerBackTitle: 'Voltar',
+          headerTintColor: '#FF8C00',
+          headerStyle: { backgroundColor: '#161b22' },
+          headerTitleStyle: { color: '#fff' },
         }}
       />
     </Stack>
