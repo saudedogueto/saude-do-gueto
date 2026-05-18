@@ -1,0 +1,23 @@
+{
+  "name": "Saúde do Gueto",
+  "short_name": "SdG",
+  "description": "App do Agente Comunitário de Saúde",
+  "start_url": "/saude-do-gueto/",
+  "scope": "/saude-do-gueto/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#FF8C00",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

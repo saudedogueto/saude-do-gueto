@@ -1,0 +1,11 @@
+﻿<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/>
+<script>
+  var path = window.location.pathname.replace(/^\/saude-do-gueto\/?/, '');
+  if (path) { sessionStorage.setItem('redirectRoute', '/' + path); }
+  window.location.replace('/saude-do-gueto/');
+</script>
+</head>
+<body></body>
+</html>
