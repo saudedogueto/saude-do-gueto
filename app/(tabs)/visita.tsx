@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, Platform
@@ -7,6 +7,7 @@ import { adicionarLembrete } from '@/src/utils/lembretes';
 import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useVisitas } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
+import { useToast } from '@/src/components/Toast';
 import { router } from 'expo-router';
 
 const MOTIVOS = [

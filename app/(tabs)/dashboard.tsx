@@ -1,7 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { usePacienteStore } from '@/src/store/pacienteStore';
 import { useFamiliaStore } from '@/src/store/familiaStore';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -19,10 +20,12 @@ export default function DashboardScreen() {
   const { logout } = useAuth();
   const { cores } = useTema();
 
-  useEffect(() => {
-    carregarPacientes();
-    carregarFamilias();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      carregarPacientes();
+      carregarFamilias();
+    }, [])
+  );
 
   const onRefresh = useCallback(() => {
     carregarPacientes();
