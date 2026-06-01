@@ -68,6 +68,13 @@ export default function DashboardScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/(tabs)/agente')}
+        >
+          <Text style={styles.buttonText}>🤖 Agente de Saúde</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, styles.buttonSecundario]}
           onPress={() => router.push('/(tabs)/lista')}
         >
