@@ -1,0 +1,79 @@
+name: Deploy App Web
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Export web
+        run: npx expo export --platform web --output-dir dist-web
+
+      - name: Fix asset paths for GitHub Pages subpath
+        working-directory: dist-web
+        run: |
+          # Fix script src to use relative paths
+          sed -i 's|src="/_expo/|src="./_expo/|g' index.html
+          # Add SPA redirect support
+          cat > 404.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Saúde do Gueto</title>
+            <script>
+              (function(){
+                var segmentCount = 1;
+                var l = window.location;
+                l.replace(
+                  l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                  l.pathname.split('/').slice(0, segmentCount + 1).join('/') + '/?p=/' +
+                  l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+                  (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                  l.hash
+                );
+              })();
+            </script>
+          </head>
+          <body></body>
+          </html>
+          EOF
+          # Add SPA redirect script to index.html
+          cat >> index.html << 'EOF2'
+          <script>
+            (function(){
+              var l = window.location;
+              var p = new URLSearchParams(l.search).get('p');
+              if (p) {
+                var basePath = l.pathname.split('/').slice(0, 2).join('/');
+                var newPath = basePath + '/' + p.replace(/~and~/g, '&');
+                var q = new URLSearchParams(l.search).get('q');
+                if (q) newPath += '?' + q.replace(/~and~/g, '&');
+                history.replaceState(null, null, newPath + l.hash);
+              }
+            })();
+          </script>
+          EOF2
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist-web
