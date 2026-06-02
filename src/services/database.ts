@@ -174,8 +174,8 @@ export async function criarPaciente(paciente: any): Promise<string> {
   const id = Date.now().toString();
   const dataCadastro = new Date().toISOString().split('T')[0];
   await database.runAsync(
-   \x60INSERT INTO pacientes (id, nome, dataNascimento, cpf, sus, microarea, endereco, telefone, responsavel, comorbidades, observacoes, foto, dataCadastro)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\x60,
+   `INSERT INTO pacientes (id, nome, dataNascimento, cpf, sus, microarea, endereco, telefone, responsavel, comorbidades, observacoes, foto, dataCadastro)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [id, paciente.nome, paciente.dataNascimento || null, paciente.cpf || null, paciente.sus || null,
      paciente.microarea || null, paciente.endereco || null, paciente.telefone || null,
      paciente.responsavel || null, paciente.comorbidades || null, paciente.observacoes || null,

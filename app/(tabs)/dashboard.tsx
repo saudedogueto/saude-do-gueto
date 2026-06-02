@@ -58,15 +58,15 @@ export default function DashboardScreen() {
           <DashboardStats />
 
           <View style={styles.grid}>
-            <View style={[styles.card, { backgroundColor: '#FFF3E0' }]}>
+            <View style={styles.card}>
               <Text style={styles.cardNumero}>{hipertensos}</Text>
               <Text style={styles.cardLabel}>Hipertensos</Text>
             </View>
-            <View style={[styles.card, { backgroundColor: '#E8F5E9' }]}>
+            <View style={styles.card}>
               <Text style={styles.cardNumero}>{diabeticos}</Text>
               <Text style={styles.cardLabel}>Diabéticos</Text>
             </View>
-            <View style={[styles.card, { backgroundColor: '#F3E5F5' }]}>
+            <View style={styles.card}>
               <Text style={styles.cardNumero}>{gestantes}</Text>
               <Text style={styles.cardLabel}>Gestantes</Text>
             </View>
@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: '#2C3E50',
     textAlign: 'center',
     marginBottom: 8,
   },
   cardTotal: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFE0B5',
     borderRadius: 16,
     padding: 24,
     margin: 16,
@@ -175,11 +175,11 @@ const styles = StyleSheet.create({
   cardTotalNumero: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#3B82F6',
+    color: '#E67E22',
   },
   cardTotalLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#2C3E50',
     marginTop: 4,
   },
   grid: {
@@ -193,9 +193,10 @@ const styles = StyleSheet.create({
     padding: 16,
     width: '30%',
     alignItems: 'center',
+    backgroundColor: '#FFF0D6',
   },
-  cardNumero: { fontSize: 28, fontWeight: 'bold', color: '#1F2937' },
-  cardLabel: { fontSize: 11, color: '#4B5563', marginTop: 4, textAlign: 'center' },
+  cardNumero: { fontSize: 28, fontWeight: 'bold', color: '#2C3E50' },
+  cardLabel: { fontSize: 11, color: '#2C3E50', marginTop: 4, textAlign: 'center' },
   atalhos: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -204,16 +205,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   atalho: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#F39C12',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     width: '45%',
-    borderWidth: 1,
-    borderColor: '#374151',
   },
   atalhoIcone: { fontSize: 28, marginBottom: 4 },
-  atalhoTexto: { color: '#D1D5DB', fontSize: 13, fontWeight: '600' },
+  atalhoTexto: { color: '#FFF', fontSize: 13, fontWeight: '600' },
   logout: {
     margin: 24,
     padding: 14,
