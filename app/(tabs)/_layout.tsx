@@ -4,10 +4,6 @@ export default function TabsLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name="index"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
         name="login"
         options={{
           title: 'Login',
@@ -18,8 +14,7 @@ export default function TabsLayout() {
         name="dashboard"
         options={{
           title: 'Dashboard',
-          headerBackTitle: 'Voltar',
-          headerTintColor: '#FF8C00',
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -60,6 +55,13 @@ export default function TabsLayout() {
           title: 'Histórico de Visitas',
           headerBackTitle: 'Voltar',
           headerTintColor: '#FF8C00',
+        }}
+      />
+      <Stack.Screen
+        name="dados"
+        options={{
+          title: 'Relatórios e Dados',
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -116,6 +118,13 @@ export default function TabsLayout() {
           title: '🗺️ Mapa Social',
           headerBackTitle: 'Voltar',
           headerTintColor: '#FF8C00',
+        }}
+      />
+      <Stack.Screen
+        name="agente"
+        options={{
+          title: 'Agente de Saúde',
+          headerShown: false,
         }}
       />
     </Stack>

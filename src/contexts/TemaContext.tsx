@@ -16,7 +16,7 @@ type Cores = {
 };
 
 export const coresClaro: Cores = {
-  fundo: '#FAFAFA',
+  fundo: '#F5F0E8',
   card: '#FFFFFF',
   texto: '#222222',
   textoSecundario: '#666666',

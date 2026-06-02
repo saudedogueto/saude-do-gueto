@@ -2,3 +2,6 @@
 dist-web2/
 gh-pages-check/
 temp_apk/
+
+# Local Netlify folder
+.netlify

@@ -4,10 +4,12 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, Alert
 } from 'react-native';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { useTema } from '@/src/contexts/TemaContext';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
   const { login, temSenha, definirSenha } = useAuth();
+  const { cores, isEscuro } = useTema();
   const [senha, setSenha] = useState('');
   const [confirmaSenha, setConfirmaSenha] = useState('');
   const [modoDefinir, setModoDefinir] = useState(false);
@@ -19,7 +21,6 @@ export default function LoginScreen() {
     }
 
     if (!temSenha) {
-      // Primeiro acesso - definir senha
       setModoDefinir(true);
       return;
     }
@@ -47,21 +48,21 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: cores.fundo }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <Text style={styles.logo}>🏥</Text>
         <Text style={styles.title}>Saúde do Gueto</Text>
-        <Text style={styles.subtitle}>Agente Comunitário de Saúde</Text>
-        <Text style={styles.desc}>Ferramenta de acompanhamento de pacientes da comunidade</Text>
+        <Text style={[styles.subtitle, { color: cores.textoSecundario }]}>Agente Comunitário de Saúde</Text>
 
         <View style={styles.form}>
           {!modoDefinir ? (
             <>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: '#FFA500', color: cores.texto }]}
                 placeholder="Digite sua senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
@@ -76,12 +77,13 @@ export default function LoginScreen() {
             </>
           ) : (
             <>
-              <Text style={styles.instructions}>
+              <Text style={[styles.instructions, { color: cores.textoSecundario }]}>
                 Defina uma senha numérica de 4 a 6 dígitos
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: '#FFA500', color: cores.texto }]}
                 placeholder="Nova senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
@@ -89,8 +91,9 @@ export default function LoginScreen() {
                 maxLength={6}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: '#FFA500', color: cores.texto }]}
                 placeholder="Confirme a senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={confirmaSenha}
                 onChangeText={setConfirmaSenha}
                 secureTextEntry
@@ -105,7 +108,7 @@ export default function LoginScreen() {
         </View>
 
         {!temSenha && (
-          <Text style={styles.aviso}>
+          <Text style={[styles.aviso, { color: cores.textoSecundario }]}>
             🔒 Primeiro acesso: defina uma senha para proteger os dados dos pacientes
           </Text>
         )}
@@ -117,7 +120,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
   content: {
     flex: 1,
@@ -137,13 +139,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
-  },
-  desc: {
-    fontSize: 13,
-    color: '#999',
-    textAlign: 'center',
     marginBottom: 30,
   },
   form: {
@@ -152,9 +147,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 52,
-    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#FFA500',
     borderRadius: 10,
     marginBottom: 15,
     paddingHorizontal: 16,
@@ -180,13 +173,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   instructions: {
-    color: '#666',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 20,
   },
   aviso: {
-    color: '#999',
     fontSize: 12,
     textAlign: 'center',
     marginTop: 30,

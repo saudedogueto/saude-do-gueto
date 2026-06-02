@@ -16,6 +16,8 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="agente/chat" options={{ headerShown: false }} />
+          <Stack.Screen name="agente/config" options={{ headerShown: false }} />
         </Stack>
         </FamiliaProvider>
         </VisitaProvider>
