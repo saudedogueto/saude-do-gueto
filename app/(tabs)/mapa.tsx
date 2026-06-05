@@ -103,9 +103,19 @@ export default function MapaSocialScreen() {
       for (const familia of familias) {
         if (!familia.endereco) continue;
 
-        const coord = await geocodificar(
-          `${familia.endereco}, ${familia.bairro || ''}, Brasil`
-        );
+        let coord: { latitude: number; longitude: number } | null = null;
+
+        // 1. Usa coordenada manual se existir
+        if (familia.latitude && familia.longitude) {
+          coord = { latitude: familia.latitude, longitude: familia.longitude };
+        }
+
+        // 2. Fallback: tenta geocodificar endereço
+        if (!coord) {
+          coord = await geocodificar(
+            `${familia.endereco}, ${familia.bairro || ''}, Brasil`
+          );
+        }
 
         if (coord) {
           const membros = (familia.membros || [])
@@ -123,7 +133,7 @@ export default function MapaSocialScreen() {
         }
 
         // Pequena pausa pra não sobrecarregar Nominatim
-        if (familias.indexOf(familia) < familias.length - 1) {
+        if (!familia.latitude && familias.indexOf(familia) < familias.length - 1) {
           await new Promise(r => setTimeout(r, 150));
         }
       }

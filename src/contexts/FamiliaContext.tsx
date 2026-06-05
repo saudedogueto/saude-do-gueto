@@ -10,6 +10,8 @@ export type Familia = {
   telefone: string;
   membros: string[]; // ids dos pacientes
   dataCriacao: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type FamiliaContextType = {

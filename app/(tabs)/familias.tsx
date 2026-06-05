@@ -8,6 +8,7 @@ import { useFamilias, Familia } from '@/src/contexts/FamiliaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { useToast } from '@/src/components/Toast';
 import { ConfirmDialog } from '@/src/components/ConfirmDialog';
+import SeletorMapa from '@/src/components/SeletorMapa';
 import { router } from 'expo-router';
 
 export default function FamiliasScreen() {
@@ -31,6 +32,8 @@ export default function FamiliasScreen() {
   const [bairro, setBairro] = useState('');
   const [microarea, setMicroarea] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [latitude, setLatitude] = useState<number | undefined>();
+  const [longitude, setLongitude] = useState<number | undefined>();
 
   // ─── Busca de membros (separada por família) ─────────
   const [buscasMembros, setBuscasMembros] = useState<Record<string, string>>({});
@@ -55,6 +58,8 @@ export default function FamiliasScreen() {
     setBairro(familia.bairro || '');
     setMicroarea(familia.microarea);
     setTelefone(familia.telefone);
+    setLatitude(familia.latitude);
+    setLongitude(familia.longitude);
     setRespSelecionado(null);
     setSugestoesResp([]);
     setMostrarForm(true);
@@ -115,6 +120,8 @@ export default function FamiliasScreen() {
           bairro: bairro.trim(),
           microarea: microarea.trim(),
           telefone: telefone.trim(),
+          latitude,
+          longitude,
         });
         showToast('Família atualizada com sucesso!');
       } else {
@@ -125,6 +132,8 @@ export default function FamiliasScreen() {
           bairro: bairro.trim(),
           microarea: microarea.trim(),
           telefone: telefone.trim(),
+          latitude,
+          longitude,
         });
         if (respSelecionado) {
           await adicionarMembro(familiaId, respSelecionado.id);
@@ -146,6 +155,8 @@ export default function FamiliasScreen() {
     setBairro('');
     setMicroarea('');
     setTelefone('');
+    setLatitude(undefined);
+    setLongitude(undefined);
     setRespSelecionado(null);
     setSugestoesResp([]);
     setMostrarForm(false);
@@ -266,6 +277,16 @@ export default function FamiliasScreen() {
             value={telefone}
             onChangeText={setTelefone}
             keyboardType="phone-pad"
+          />
+
+          <SeletorMapa
+            latitude={latitude}
+            longitude={longitude}
+            endereco={endereco}
+            onSelecionar={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
           />
 
           <View style={styles.formActions}>
