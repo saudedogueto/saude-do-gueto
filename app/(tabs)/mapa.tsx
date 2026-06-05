@@ -1,347 +1,475 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput,
+  View, Text, StyleSheet, TouchableOpacity, Linking, Platform,
+  ActivityIndicator, Dimensions
 } from 'react-native';
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useFocusEffect } from '@react-navigation/native';
 import { useFamilias } from '@/src/contexts/FamiliaContext';
 import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useTema } from '@/src/contexts/TemaContext';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
+import { geocodificar } from '@/src/services/geocoding';
 
-type FamiliaComPacientes = {
-  familia: import('@/src/contexts/FamiliaContext').Familia;
-  pacientes: import('@/src/contexts/PacienteContext').Paciente[];
+type FamiliaComCoords = {
+  id: string;
+  nomeResponsavel: string;
+  endereco: string;
+  telefone: string;
+  latitude: number;
+  longitude: number;
+  membros: any[];
 };
+
+type Condicao = 'hipertensao' | 'diabetes' | 'gestante' | 'menorDoisAnos';
+
+const CORES_PIN: Record<string, string> = {
+  hipertensao: '#EF4444',
+  diabetes: '#3B82F6',
+  gestante: '#EC4899',
+  menorDoisAnos: '#10B981',
+};
+
+function getCondicoes(p: any): Condicao[] {
+  const conds: Condicao[] = [];
+  if (p.hipertensao) conds.push('hipertensao');
+  if (p.diabetes) conds.push('diabetes');
+  if (p.gestante) conds.push('gestante');
+  if (p.menorDoisAnos) conds.push('menorDoisAnos');
+  return conds;
+}
+
+function getCorPin(membros: any[]): string {
+  const todas = new Set<Condicao>();
+  for (const m of membros) {
+    for (const c of getCondicoes(m)) todas.add(c);
+  }
+  if (todas.has('gestante')) return CORES_PIN.gestante;
+  if (todas.has('menorDoisAnos')) return CORES_PIN.menorDoisAnos;
+  if (todas.has('hipertensao')) return CORES_PIN.hipertensao;
+  if (todas.has('diabetes')) return CORES_PIN.diabetes;
+  return '#6B7280'; // cinza — sem condição especial
+}
+
+function getLegenda(cor: string): string {
+  const entry = Object.entries(CORES_PIN).find(([, c]) => c === cor);
+  if (!entry) return 'Sem condição especial';
+  const mapa: Record<string, string> = {
+    hipertensao: 'Hipertenso',
+    diabetes: 'Diabético',
+    gestante: 'Gestante',
+    menorDoisAnos: '< 2 anos',
+  };
+  return mapa[entry[0]] || 'Sem condição';
+}
+
+function getCondicoesTexto(membros: any[]): string {
+  const todas = new Set<string>();
+  for (const m of membros) {
+    for (const c of getCondicoes(m)) {
+      const mapa: Record<string, string> = {
+        hipertensao: 'HAS',
+        diabetes: 'DM',
+        gestante: 'Gestante',
+        menorDoisAnos: '<2a',
+      };
+      todas.add(mapa[c]);
+    }
+  }
+  return Array.from(todas).join(' · ');
+}
 
 export default function MapaSocialScreen() {
   const { familias, carregarFamilias } = useFamilias();
   const { pacientes, carregarPacientes } = usePacientes();
   const { cores } = useTema();
-  const [filtroRua, setFiltroRua] = useState('');
+  const [familiasMapa, setFamiliasMapa] = useState<FamiliaComCoords[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [familiaSelecionada, setFamiliaSelecionada] = useState<FamiliaComCoords | null>(null);
+  const mapRef = useRef<MapView>(null);
 
   useFocusEffect(useCallback(() => {
     carregarFamilias();
     carregarPacientes();
   }, []));
 
-  // Mapa: rua → famílias
-  const familiasComPacientes: FamiliaComPacientes[] = familias.map(f => ({
-    familia: f,
-    pacientes: f.membros
-      .map(id => pacientes.find(p => p.id === id))
-      .filter((p): p is import('@/src/contexts/PacienteContext').Paciente => !!p),
-  }));
+  useEffect(() => {
+    async function geolocalizar() {
+      setCarregando(true);
+      setFamiliasMapa([]);
 
-  // Extrai o nome da rua do endereço (ex: "Rua das Flores, 123" → "Rua das Flores")
-  const getRua = (endereco: string) => {
-    if (!endereco) return 'Sem rua';
-    const partes = endereco.split(',');
-    return partes[0].trim();
-  };
+      const resultados: FamiliaComCoords[] = [];
 
-  // Agrupa por rua
-  const ruas = new Map<string, FamiliaComPacientes[]>();
-  for (const fp of familiasComPacientes) {
-    const rua = getRua(fp.familia.endereco);
-    if (!ruas.has(rua)) ruas.set(rua, []);
-    ruas.get(rua)!.push(fp);
-  }
+      for (const familia of familias) {
+        if (!familia.endereco) continue;
 
-  // Filtra por nome de rua
-  const ruasFiltradas = filtroRua.trim()
-    ? Array.from(ruas.entries()).filter(([rua]) =>
-        rua.toLowerCase().includes(filtroRua.toLowerCase())
-      )
-    : Array.from(ruas.entries());
+        const coord = await geocodificar(
+          `${familia.endereco}, ${familia.bairro || ''}, Brasil`
+        );
 
-  // Ordena ruas alfabeticamente
-  ruasFiltradas.sort(([a], [b]) => a.localeCompare(b));
+        if (coord) {
+          const membros = (familia.membros || [])
+            .map((id: string) => pacientes.find(p => p.id === id))
+            .filter(Boolean);
 
-  const getCondicoes = (p: import('@/src/contexts/PacienteContext').Paciente) => {
-    const tags: { label: string; bg: string; color: string }[] = [];
-    if (p.hipertensao) tags.push({ label: 'HAS', bg: '#FFCDD2', color: '#C62828' });
-    if (p.diabetes) tags.push({ label: 'DM', bg: '#BBDEFB', color: '#1565C0' });
-    if (p.gestante) tags.push({ label: 'Gestante', bg: '#F8BBD0', color: '#AD1457' });
-    if (p.menorDoisAnos) tags.push({ label: '<2 anos', bg: '#C8E6C9', color: '#2E7D32' });
-    return tags;
+          resultados.push({
+            id: familia.id,
+            nomeResponsavel: familia.nomeResponsavel,
+            endereco: familia.endereco,
+            telefone: familia.telefone || '',
+            ...coord,
+            membros,
+          });
+        }
+
+        // Pequena pausa pra não sobrecarregar Nominatim
+        if (familias.indexOf(familia) < familias.length - 1) {
+          await new Promise(r => setTimeout(r, 150));
+        }
+      }
+
+      setFamiliasMapa(resultados);
+      setCarregando(false);
+    }
+
+    if (familias.length > 0) {
+      geolocalizar();
+    } else {
+      setCarregando(false);
+    }
+  }, [familias, pacientes]);
+
+  const abrirRota = (familia: FamiliaComCoords) => {
+    const url = Platform.select({
+      ios: `maps:0,0?q=${familia.latitude},${familia.longitude}`,
+      android: `geo:0,0?q=${familia.latitude},${familia.longitude}(${encodeURIComponent(familia.endereco)})`,
+    });
+    if (url) {
+      Linking.openURL(url).catch(() => {
+        // Fallback pro Google Maps web
+        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${familia.latitude},${familia.longitude}`);
+      });
+    }
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
-      {/* Busca por rua */}
-      <View style={styles.searchBox}>
-        <TextInput
-          style={[styles.searchInput, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
-          placeholder="Buscar por nome da rua..."
-          placeholderTextColor={cores.textoSecundario}
-          value={filtroRua}
-          onChangeText={setFiltroRua}
-        />
-      </View>
-
-      {ruasFiltradas.length === 0 && (
-        <View style={styles.vazio}>
-          <Text style={[styles.vazioTexto, { color: cores.textoSecundario }]}>
-            {familias.length === 0
-              ? 'Nenhuma família cadastrada ainda.\nVá em 👨‍👩‍👧‍👦 Famílias para cadastrar!'
-              : 'Nenhuma rua encontrada com esse nome.'}
-          </Text>
+    <View style={[styles.container, { backgroundColor: cores.fundo }]}>
+      {carregando ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="#FF8C00" />
+          <Text style={styles.loadingText}>Geolocalizando famílias...</Text>
+          <Text style={styles.loadingSub}>Isso pode levar alguns segundos</Text>
         </View>
-      )}
+      ) : (
+        <>
+          <MapView
+            ref={mapRef}
+            style={styles.mapa}
+            provider={undefined} // Usa Apple Maps no iOS, Google Maps no Android
+            initialRegion={{
+              latitude: familiasMapa.length > 0 ? familiasMapa[0].latitude : -15.7939,
+              longitude: familiasMapa.length > 0 ? familiasMapa[0].longitude : -47.8828,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+            showsUserLocation
+            showsCompass
+          >
+            {familiasMapa.map((fam) => {
+              const corPin = getCorPin(fam.membros);
+              return (
+                <Marker
+                  key={fam.id}
+                  coordinate={{ latitude: fam.latitude, longitude: fam.longitude }}
+                  pinColor={corPin}
+                  onPress={() => setFamiliaSelecionada(fam)}
+                >
+                  <Callout>
+                    <View style={styles.callout}>
+                      <Text style={styles.calloutNome}>{fam.nomeResponsavel}</Text>
+                      <Text style={styles.calloutEnd}>{fam.endereco}</Text>
+                      {fam.membros.length > 0 && (
+                        <Text style={styles.calloutCond}>
+                          {getCondicoesTexto(fam.membros)}
+                        </Text>
+                      )}
+                      {fam.telefone ? (
+                        <Text style={styles.calloutTel}>📞 {fam.telefone}</Text>
+                      ) : null}
+                    </View>
+                  </Callout>
+                </Marker>
+              );
+            })}
+          </MapView>
 
-      {ruasFiltradas.map(([rua, familiasDaRua]) => (
-        <View key={rua} style={styles.ruaBloco}>
-          {/* Cabeçalho da rua */}
-          <View style={styles.ruaHeader}>
-            <Text style={styles.ruaIcon}>📍</Text>
-            <Text style={styles.ruaNome}>{rua}</Text>
-            <View style={styles.ruaBadge}>
-              <Text style={styles.ruaBadgeText}>{familiasDaRua.length} família(s)</Text>
+          {/* Card inferior */}
+          {familiaSelecionada && (
+            <View style={[styles.card, { backgroundColor: cores.card }]}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitulo}>{familiaSelecionada.nomeResponsavel}</Text>
+                <TouchableOpacity onPress={() => setFamiliaSelecionada(null)}>
+                  <Text style={styles.cardFechar}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.cardSub}>{familiaSelecionada.endereco}</Text>
+
+              {/* Tags de condições */}
+              {familiaSelecionada.membros.length > 0 && (
+                <View style={styles.cardTags}>
+                  {Array.from(new Set(familiaSelecionada.membros.flatMap(m =>
+                    getCondicoes(m)
+                  ))).map((cond, i) => (
+                    <View key={i} style={[styles.tag, { backgroundColor: CORES_PIN[cond] + '20' }]}>
+                      <View style={[styles.tagBolinha, { backgroundColor: CORES_PIN[cond] }]} />
+                      <Text style={[styles.tagTexto, { color: CORES_PIN[cond] }]}>
+                        {getLegenda(CORES_PIN[cond])}
+                      </Text>
+                    </View>
+                  ))}
+                  {familiaSelecionada.membros.filter(m =>
+                    getCondicoes(m).length === 0
+                  ).length > 0 && (
+                    <View style={[styles.tag, { backgroundColor: '#6B728020' }]}>
+                      <View style={[styles.tagBolinha, { backgroundColor: '#6B7280' }]} />
+                      <Text style={[styles.tagTexto, { color: '#6B7280' }]}>
+                        Sem condição
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Botões */}
+              <View style={styles.cardBotoes}>
+                <TouchableOpacity
+                  style={styles.botaoRota}
+                  onPress={() => abrirRota(familiaSelecionada)}
+                >
+                  <Text style={styles.botaoRotaTexto}>🗺️ Ver Rota</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.botaoDetalhes}
+                  onPress={() => router.push('/(tabs)/familias')}
+                >
+                  <Text style={styles.botaoDetalhesTexto}>Detalhes</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Legenda */}
+          <View style={styles.legenda}>
+            {Object.entries(CORES_PIN).map(([cond, cor]) => (
+              <View key={cond} style={styles.legendaItem}>
+                <View style={[styles.legendaBolinha, { backgroundColor: cor }]} />
+                <Text style={styles.legendaTexto}>{getLegenda(cor)}</Text>
+              </View>
+            ))}
+            <View style={styles.legendaItem}>
+              <View style={[styles.legendaBolinha, { backgroundColor: '#6B7280' }]} />
+              <Text style={styles.legendaTexto}>Sem condição</Text>
             </View>
           </View>
 
-          {/* Famílias dessa rua */}
-          {familiasDaRua.map(({ familia, pacientes: membros }) => (
-            <TouchableOpacity
-              key={familia.id}
-              style={[styles.familiaCard, { backgroundColor: cores.card, borderColor: cores.borda }]}
-              onPress={() => router.push(`/(tabs)/familias`)}
-              activeOpacity={0.7}
-            >
-              {/* Linha do responsável */}
-              <View style={styles.familiaHeader}>
-                {(() => {
-                  const primeiroMembro = membros[0];
-                  if (primeiroMembro?.foto) {
-                    return <Image source={{ uri: primeiroMembro.foto }} style={styles.familiaFoto} />;
-                  }
-                  return (
-                    <View style={[styles.familiaFoto, styles.familiaFotoPlaceholder]}>
-                      <Text style={styles.familiaFotoPlaceholderText}>
-                        {familia.nomeResponsavel.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  );
-                })()}
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.familiaNome, { color: cores.texto }]}>
-                    👨‍👩‍👧‍👦 {familia.nomeResponsavel}
-                  </Text>
-                  <Text style={[styles.familiaEndereco, { color: cores.textoSecundario }]}>
-                    📍 {familia.endereco}
-                  </Text>
-                  {familia.telefone ? (
-                    <Text style={[styles.familiaTel, { color: cores.textoSecundario }]}>
-                      📞 {familia.telefone}
-                    </Text>
-                  ) : null}
-                </View>
-                <Text style={styles.familiaSeta}>›</Text>
-              </View>
-
-              {/* Membros da família */}
-              {membros.length > 0 && (
-                <View style={[styles.membrosArea, { borderTopColor: cores.borda }]}>
-                  <Text style={[styles.membrosLabel, { color: cores.textoSecundario }]}>
-                    👥 Membros ({membros.length})
-                  </Text>
-                  {membros.map(m => (
-                    <TouchableOpacity
-                      key={m.id}
-                      style={styles.membroRow}
-                      onPress={() => router.push(`/(tabs)/detalhes?id=${m.id}`)}
-                    >
-                      {m.foto ? (
-                        <Image source={{ uri: m.foto }} style={styles.membroFoto} />
-                      ) : (
-                        <View style={[styles.membroFoto, styles.membroFotoPlaceholder]}>
-                          <Text style={styles.membroFotoPlaceholderText}>
-                            {m.nome.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.membroNome, { color: cores.texto }]}>{m.nome}</Text>
-                        <View style={styles.tagsRow}>
-                          {getCondicoes(m).map((tag, i) => (
-                            <Text key={i} style={[styles.tag, { backgroundColor: tag.bg, color: tag.color }]}>
-                              {tag.label}
-                            </Text>
-                          ))}
-                        </View>
-                      </View>
-                      <Text style={styles.membroSeta}>›</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {membros.length === 0 && (
-                <View style={[styles.membrosArea, { borderTopColor: cores.borda }]}>
-                  <Text style={[styles.membrosLabel, { color: cores.textoSecundario }]}>
-                    👥 Sem membros cadastrados
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      ))}
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
+          {/* Contador */}
+          <View style={styles.contador}>
+            <Text style={styles.contadorTexto}>
+              📍 {familiasMapa.length} de {familias.length} famílias no mapa
+            </Text>
+          </View>
+        </>
+      )}
+    </View>
   );
 }
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+  loading: {
     flex: 1,
-    padding: 12,
-  },
-  searchBox: {
-    marginBottom: 12,
-  },
-  searchInput: {
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-  },
-  vazio: {
-    marginTop: 80,
-    alignItems: 'center',
-  },
-  vazioTexto: {
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  ruaBloco: {
-    marginBottom: 16,
-  },
-  ruaHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 6,
-  },
-  ruaIcon: {
-    fontSize: 16,
-  },
-  ruaNome: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#FF8C00',
-    flex: 1,
-  },
-  ruaBadge: {
-    backgroundColor: '#FF8C0020',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  ruaBadgeText: {
-    fontSize: 12,
-    color: '#FF8C00',
-    fontWeight: '600',
-  },
-  familiaCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 10,
-    overflow: 'hidden',
-  },
-  familiaHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    gap: 12,
-  },
-  familiaFoto: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  familiaFotoPlaceholder: {
-    backgroundColor: '#FF8C00',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 32,
   },
-  familiaFotoPlaceholderText: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
-  familiaNome: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  familiaEndereco: {
+  loadingSub: {
+    marginTop: 4,
     fontSize: 13,
+    color: '#999',
+  },
+  mapa: {
+    flex: 1,
+  },
+  // ===== Callout =====
+  callout: {
+    minWidth: 160,
+    padding: 4,
+  },
+  calloutNome: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111',
+  },
+  calloutEnd: {
+    fontSize: 12,
+    color: '#666',
     marginTop: 2,
   },
-  familiaTel: {
-    fontSize: 13,
-    marginTop: 1,
-  },
-  familiaSeta: {
-    fontSize: 22,
-    color: '#CCC',
-    fontWeight: 'bold',
-  },
-  membrosArea: {
-    borderTopWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  membrosLabel: {
-    fontSize: 12,
+  calloutCond: {
+    fontSize: 11,
+    color: '#FF8C00',
     fontWeight: '600',
-    marginBottom: 6,
+    marginTop: 4,
   },
-  membroRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+  calloutTel: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 2,
   },
-  membroFoto: {
-    width: 32,
-    height: 32,
+  // ===== Card inferior =====
+  card: {
+    position: 'absolute',
+    bottom: 80,
+    left: 12,
+    right: 12,
     borderRadius: 16,
+    padding: 16,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
-  membroFotoPlaceholder: {
-    backgroundColor: '#FF8C20',
-    justifyContent: 'center',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  membroFotoPlaceholderText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  membroNome: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  membroSeta: {
+  cardTitulo: {
     fontSize: 18,
-    color: '#CCC',
     fontWeight: 'bold',
+    color: '#FF8C00',
+    flex: 1,
   },
-  tagsRow: {
+  cardFechar: {
+    fontSize: 18,
+    color: '#999',
+    paddingLeft: 12,
+  },
+  cardSub: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  cardTags: {
     flexDirection: 'row',
-    gap: 4,
-    marginTop: 3,
     flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10,
   },
   tag: {
-    fontSize: 10,
-    fontWeight: '600',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  tagBolinha: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
-    overflow: 'hidden',
+  },
+  tagTexto: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  cardBotoes: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  botaoRota: {
+    flex: 1,
+    backgroundColor: '#FF8C00',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  botaoRotaTexto: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  botaoDetalhes: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  botaoDetalhesTexto: {
+    color: '#6B7280',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  // ===== Legenda =====
+  legenda: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 10,
+    padding: 10,
+    gap: 6,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  legendaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendaBolinha: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendaTexto: {
+    fontSize: 11,
+    color: '#444',
+    fontWeight: '500',
+  },
+  // ===== Contador =====
+  contador: {
+    position: 'absolute',
+    top: 50,
+    left: 10,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  contadorTexto: {
+    fontSize: 12,
+    color: '#444',
+    fontWeight: '500',
   },
 });
