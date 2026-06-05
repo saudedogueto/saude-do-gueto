@@ -39,3 +39,7 @@ app-example
 
 # Local Netlify folder
 .netlify
+
+# Firebase
+firebase-debug.log
+.wrangler/
