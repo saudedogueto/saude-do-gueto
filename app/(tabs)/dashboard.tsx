@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { usePacienteStore } from '@/src/store/pacienteStore';
@@ -10,6 +10,7 @@ import { useTema } from '@/src/contexts/TemaContext';
 import { router } from 'expo-router';
 import { DashboardStats } from '@/src/components/DashboardStats';
 import { SkeletonList } from '@/src/components/Skeleton';
+import { useSync } from '@/src/hooks/useSync';
 
 export default function DashboardScreen() {
   const pacientes = usePacienteStore(s => s.pacientes);
@@ -31,6 +32,13 @@ export default function DashboardScreen() {
     carregarPacientes();
     carregarFamilias();
   }, []);
+
+  const { syncing, lastSync, error, sincronizar } = useSync();
+
+  const handleSync = async () => {
+    if (syncing) return;
+    await sincronizar();
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -131,6 +139,15 @@ export default function DashboardScreen() {
               <Text style={styles.atalhoTexto}>Lembretes</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.atalho, syncing && styles.atalhoSyncando]}
+              onPress={handleSync}
+            >
+              <Text style={styles.atalhoIcone}>{syncing ? '⏳' : '☁️'}</Text>
+              <Text style={styles.atalhoTexto}>
+                {syncing ? 'Sincronizando...' : lastSync ? 'Sincronizado ✓' : 'Sincronizar'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.atalho}
               onPress={() => router.push('/(tabs)/config')}
             >
@@ -211,6 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '45%',
   },
+  atalhoSyncando: { backgroundColor: '#6B7280' },
   atalhoIcone: { fontSize: 28, marginBottom: 4 },
   atalhoTexto: { color: '#FFF', fontSize: 13, fontWeight: '600' },
   logout: {
