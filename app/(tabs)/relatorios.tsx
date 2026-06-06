@@ -8,12 +8,15 @@ import { useTema } from '@/src/contexts/TemaContext';
 import { useToast } from '@/src/components/Toast';
 import { router } from 'expo-router';
 
+type Periodo = 'geral' | 'mes' | 'semana';
+
 export default function RelatoriosScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
   const { visitas, carregarVisitas } = useVisitas();
   const { cores } = useTema();
   const { showToast } = useToast();
-  const [periodo, setPeriodo] = useState<'geral' | 'mes' | 'semana'>('geral');
+  const [periodo, setPeriodo] = useState<Periodo>('geral');
+  const [aba, setAba] = useState<'geral' | 'visitas'>('geral');
 
   useEffect(() => {
     carregarPacientes();
@@ -234,13 +237,29 @@ export default function RelatoriosScreen() {
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
       <Text style={[styles.title, { color: cores.primary }]}>📊 Relatórios</Text>
 
-      {/* Seletor de Período */}
+      {/* ── Abas: Geral | Visitas ── */}
+      <View style={styles.abaRow}>
+        <TouchableOpacity
+          style={[styles.abaBtn, aba === 'geral' && styles.abaAtiva]}
+          onPress={() => setAba('geral')}
+        >
+          <Text style={[styles.abaText, aba === 'geral' && styles.abaTextAtiva]}>📋 Geral</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.abaBtn, aba === 'visitas' && styles.abaAtiva]}
+          onPress={() => setAba('visitas')}
+        >
+          <Text style={[styles.abaText, aba === 'visitas' && styles.abaTextAtiva]}>🏠 Visitas</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Seletor de Período ── */}
       <View style={styles.periodoRow}>
-        {['geral', 'mes', 'semana'].map(p => (
+        {(['geral', 'mes', 'semana'] as const).map(p => (
           <TouchableOpacity
             key={p}
             style={[styles.periodoBtn, periodo === p && styles.periodoAtivo]}
-            onPress={() => setPeriodo(p as any)}
+            onPress={() => setPeriodo(p)}
           >
             <Text style={[styles.periodoText, periodo === p && styles.periodoTextAtivo]}>
               {p === 'geral' ? 'Geral' : p === 'mes' ? 'Último Mês' : 'Última Semana'}
@@ -249,85 +268,163 @@ export default function RelatoriosScreen() {
         ))}
       </View>
 
-      {/* Card Principal */}
-      <View style={styles.cardTotal}>
-        <Text style={styles.cardTotalNumero}>{pacientes.length}</Text>
-        <Text style={styles.cardTotalLabel}>Pacientes Cadastrados</Text>
-      </View>
+      {/* ════════════════════════════════════════════════ */}
+      {/* ABA GERAL                                      */}
+      {/* ════════════════════════════════════════════════ */}
+      {aba === 'geral' && (
+        <>
+          {/* Card Principal */}
+          <View style={styles.cardTotal}>
+            <Text style={styles.cardTotalNumero}>{pacientes.length}</Text>
+            <Text style={styles.cardTotalLabel}>Pacientes Cadastrados</Text>
+          </View>
 
-      {/* Grid Condições */}
-      <Text style={styles.sectionTitle}>🩺 Condições de Saúde</Text>
-      <View style={styles.grid}>
-        <View style={[styles.card, { backgroundColor: cores.primaryLight }]}>
-          <Text style={styles.cardNumero}>{hipertensos}</Text>
-          <Text style={styles.cardLabel}>Hipertensos</Text>
-          <Text style={styles.cardPct}>
-            {pacientes.length > 0 ? Math.round((hipertensos / pacientes.length) * 100) : 0}%
-          </Text>
-        </View>
-        <View style={[styles.card, { backgroundColor: 'rgba(0, 230, 118, 0.12)' }]}>
-          <Text style={styles.cardNumero}>{diabeticos}</Text>
-          <Text style={styles.cardLabel}>Diabéticos</Text>
-          <Text style={styles.cardPct}>
-            {pacientes.length > 0 ? Math.round((diabeticos / pacientes.length) * 100) : 0}%
-          </Text>
-        </View>
-        <View style={[styles.card, { backgroundColor: 'rgba(0, 176, 255, 0.12)' }]}>
-          <Text style={styles.cardNumero}>{gestantes}</Text>
-          <Text style={styles.cardLabel}>Gestantes</Text>
-          <Text style={styles.cardPct}>
-            {pacientes.length > 0 ? Math.round((gestantes / pacientes.length) * 100) : 0}%
-          </Text>
-        </View>
-      </View>
+          {/* Grid Condições */}
+          <Text style={styles.sectionTitle}>🩺 Condições de Saúde</Text>
+          <View style={styles.grid}>
+            <View style={[styles.card, { backgroundColor: cores.primaryLight }]}>
+              <Text style={styles.cardNumero}>{hipertensos}</Text>
+              <Text style={styles.cardLabel}>Hipertensos</Text>
+              <Text style={styles.cardPct}>
+                {pacientes.length > 0 ? Math.round((hipertensos / pacientes.length) * 100) : 0}%
+              </Text>
+            </View>
+            <View style={[styles.card, { backgroundColor: 'rgba(0, 230, 118, 0.12)' }]}>
+              <Text style={styles.cardNumero}>{diabeticos}</Text>
+              <Text style={styles.cardLabel}>Diabéticos</Text>
+              <Text style={styles.cardPct}>
+                {pacientes.length > 0 ? Math.round((diabeticos / pacientes.length) * 100) : 0}%
+              </Text>
+            </View>
+            <View style={[styles.card, { backgroundColor: 'rgba(0, 176, 255, 0.12)' }]}>
+              <Text style={styles.cardNumero}>{gestantes}</Text>
+              <Text style={styles.cardLabel}>Gestantes</Text>
+              <Text style={styles.cardPct}>
+                {pacientes.length > 0 ? Math.round((gestantes / pacientes.length) * 100) : 0}%
+              </Text>
+            </View>
+          </View>
 
-      {/* Visitas */}
-      <Text style={styles.sectionTitle}>🏠 Visitas Domiciliares</Text>
-      <View style={styles.visitasCard}>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>Total de visitas:</Text>
-          <Text style={styles.visitaValor}>{visitasPeriodo.length}</Text>
-        </View>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>Pacientes visitados:</Text>
-          <Text style={styles.visitaValor}>{pacientesComVisitas}</Text>
-        </View>
-        <View style={styles.divisor} />
-        <Text style={styles.subSectionTitle}>Por motivo:</Text>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>🔄 Rotina</Text>
-          <Text style={styles.visitaValor}>{visitasPorMotivo('rotina')}</Text>
-        </View>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>🔙 Retorno</Text>
-          <Text style={styles.visitaValor}>{visitasPorMotivo('retorno')}</Text>
-        </View>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>🤒 Queixa</Text>
-          <Text style={styles.visitaValor}>{visitasPorMotivo('queixa')}</Text>
-        </View>
-        <View style={styles.visitaRow}>
-          <Text style={styles.visitaLabel}>📋 Encaminhamento</Text>
-          <Text style={styles.visitaValor}>{visitasPorMotivo('encaminhamento')}</Text>
-        </View>
-      </View>
+          {/* Visitas */}
+          <Text style={styles.sectionTitle}>🏠 Visitas Domiciliares</Text>
+          <View style={styles.visitasCard}>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>Total de visitas:</Text>
+              <Text style={styles.visitaValor}>{visitasPeriodo.length}</Text>
+            </View>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>Pacientes visitados:</Text>
+              <Text style={styles.visitaValor}>{pacientesComVisitas}</Text>
+            </View>
+            <View style={styles.divisor} />
+            <Text style={styles.subSectionTitle}>Por motivo:</Text>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>🔄 Rotina</Text>
+              <Text style={styles.visitaValor}>{visitasPorMotivo('rotina')}</Text>
+            </View>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>🔙 Retorno</Text>
+              <Text style={styles.visitaValor}>{visitasPorMotivo('retorno')}</Text>
+            </View>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>🤒 Queixa</Text>
+              <Text style={styles.visitaValor}>{visitasPorMotivo('queixa')}</Text>
+            </View>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>📋 Encaminhamento</Text>
+              <Text style={styles.visitaValor}>{visitasPorMotivo('encaminhamento')}</Text>
+            </View>
+          </View>
 
-      {/* Exportação */}
-      <Text style={styles.sectionTitle}>📤 Exportar Dados</Text>
-      <View style={styles.exportRow}>
-        <TouchableOpacity style={styles.exportBtn} onPress={exportarDados}>
-          <Text style={styles.exportText}>📋 Pacientes</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.exportBtn} onPress={exportarVisitas}>
-          <Text style={styles.exportText}>🏠 Visitas</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarRelatorioCompleto}>
-        <Text style={styles.exportTextCompleto}>📑 Relatório Completo (CSV)</Text>
-      </TouchableOpacity>
-      <Text style={styles.exportInfo}>
-        CSV profissional com resumo + dados — compatível com Excel, Google Sheets e e-SUS
-      </Text>
+          {/* Exportação */}
+          <Text style={styles.sectionTitle}>📤 Exportar Dados</Text>
+          <View style={styles.exportRow}>
+            <TouchableOpacity style={styles.exportBtn} onPress={exportarDados}>
+              <Text style={styles.exportText}>📋 Pacientes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.exportBtn} onPress={exportarVisitas}>
+              <Text style={styles.exportText}>🏠 Visitas</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarRelatorioCompleto}>
+            <Text style={styles.exportTextCompleto}>📑 Relatório Completo (CSV)</Text>
+          </TouchableOpacity>
+          <Text style={styles.exportInfo}>
+            CSV profissional com resumo + dados — compatível com Excel, Google Sheets e e-SUS
+          </Text>
+        </>
+      )}
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* ABA VISITAS                                    */}
+      {/* ════════════════════════════════════════════════ */}
+      {aba === 'visitas' && (
+        <>
+          {/* Card Total de Visitas */}
+          <View style={styles.cardTotal}>
+            <Text style={styles.cardTotalNumero}>{visitasPeriodo.length}</Text>
+            <Text style={styles.cardTotalLabel}>Total de Visitas</Text>
+          </View>
+
+          {/* Por Motivo */}
+          <Text style={styles.sectionTitle}>📌 Por Motivo</Text>
+          <View style={styles.grid}>
+            <View style={[styles.card, { backgroundColor: 'rgba(0, 230, 118, 0.12)' }]}>
+              <Text style={styles.cardNumero}>{visitasPorMotivo('rotina')}</Text>
+              <Text style={styles.cardLabel}>Rotina</Text>
+            </View>
+            <View style={[styles.card, { backgroundColor: 'rgba(0, 176, 255, 0.12)' }]}>
+              <Text style={styles.cardNumero}>{visitasPorMotivo('retorno')}</Text>
+              <Text style={styles.cardLabel}>Retorno</Text>
+            </View>
+            <View style={[styles.card, { backgroundColor: 'rgba(255, 152, 0, 0.12)' }]}>
+              <Text style={styles.cardNumero}>{visitasPorMotivo('queixa')}</Text>
+              <Text style={styles.cardLabel}>Queixa</Text>
+            </View>
+          </View>
+          <View style={[styles.card, { backgroundColor: 'rgba(233, 30, 99, 0.12)', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 20 }]}>
+            <Text style={styles.cardNumero}>{visitasPorMotivo('encaminhamento')}</Text>
+            <Text style={styles.cardLabel}>Encaminhamentos</Text>
+          </View>
+
+          {/* Indicadores */}
+          <Text style={styles.sectionTitle}>📈 Indicadores</Text>
+          <View style={styles.visitasCard}>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>Pacientes visitados:</Text>
+              <Text style={styles.visitaValor}>{pacientesComVisitas}</Text>
+            </View>
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>Média de visitas/dia:</Text>
+              <Text style={styles.visitaValor}>
+                {periodo === 'semana'
+                  ? (visitasPeriodo.length / 7).toFixed(1)
+                  : periodo === 'mes'
+                    ? (visitasPeriodo.length / 30).toFixed(1)
+                    : visitasPeriodo.length > 0 ? '—' : '0'}
+              </Text>
+            </View>
+            <View style={styles.divisor} />
+            <View style={styles.visitaRow}>
+              <Text style={styles.visitaLabel}>Taxa de cobertura:</Text>
+              <Text style={styles.visitaValor}>
+                {pacientes.length > 0
+                  ? `${Math.round((pacientesComVisitas / pacientes.length) * 100)}%`
+                  : '0%'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Exportar Visitas */}
+          <Text style={styles.sectionTitle}>📤 Exportar</Text>
+          <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarVisitas}>
+            <Text style={styles.exportTextCompleto}>📑 Relatório de Visitas (CSV)</Text>
+          </TouchableOpacity>
+          <Text style={styles.exportInfo}>
+            CSV detalhado com todas as visitas do período — compatível com Excel, Google Sheets e e-SUS
+          </Text>
+        </>
+      )}
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -348,6 +445,34 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
+  // ── Abas ──
+  abaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  abaBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  abaAtiva: {
+    backgroundColor: '#00E676',
+    borderColor: '#00E676',
+  },
+  abaText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.6)',
+  },
+  abaTextAtiva: {
+    color: '#0B1220',
+  },
+  // ── Período ──
   periodoRow: {
     flexDirection: 'row',
     gap: 8,
@@ -374,6 +499,7 @@ const styles = StyleSheet.create({
   periodoTextAtivo: {
     color: '#0B1220',
   },
+  // ── Cards ──
   cardTotal: {
     backgroundColor: '#00E676',
     borderRadius: 16,
@@ -412,7 +538,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 25,
+    marginBottom: 20,
   },
   card: {
     flex: 1,
@@ -435,6 +561,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.4)',
     marginTop: 2,
   },
+  // ── Visitas ──
   visitasCard: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
@@ -462,6 +589,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     marginVertical: 8,
   },
+  // ── Export ──
   exportRow: {
     flexDirection: 'row',
     gap: 12,
