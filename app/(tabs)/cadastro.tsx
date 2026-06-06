@@ -197,9 +197,7 @@ export default function CadastroScreen() {
     }
   };
 
-  const scrollToEnd = () => {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
-  };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: cores.fundo }}>
@@ -207,9 +205,9 @@ export default function CadastroScreen() {
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="always"
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={true}
-        bounces={true}
+        bounces={false}
         overScrollMode="always"
         scrollEnabled={true}
         nestedScrollEnabled={true}
@@ -240,7 +238,6 @@ export default function CadastroScreen() {
           placeholderTextColor={placeholderCor(cores, isEscuro)}
           value={nome}
           onChangeText={setNome}
-          onFocus={scrollToEnd}
           autoCapitalize="words"
         />
 
@@ -253,7 +250,6 @@ export default function CadastroScreen() {
           onChangeText={handleCpfChange}
           keyboardType="numeric"
           maxLength={14}
-          onFocus={scrollToEnd}
         />
 
         <Text style={[styles.label, { color: cores.texto }]}>Data de nascimento</Text>
@@ -265,7 +261,6 @@ export default function CadastroScreen() {
           onChangeText={handleDataChange}
           keyboardType="numeric"
           maxLength={10}
-          onFocus={scrollToEnd}
         />
 
         {/* ── Documentos ──────────────────────────────── */}
@@ -279,7 +274,6 @@ export default function CadastroScreen() {
           value={cartaoSUS}
           onChangeText={setCartaoSUS}
           keyboardType="numeric"
-          onFocus={scrollToEnd}
         />
 
         {/* ── Contato ─────────────────────────────────── */}
@@ -294,7 +288,6 @@ export default function CadastroScreen() {
           onChangeText={handleTelChange}
           keyboardType="phone-pad"
           maxLength={15}
-          onFocus={scrollToEnd}
         />
 
         {/* ── Localização ─────────────────────────────── */}
@@ -311,7 +304,6 @@ export default function CadastroScreen() {
               onChangeText={handleCepChange}
               keyboardType="numeric"
               maxLength={9}
-              onFocus={scrollToEnd}
             />
           </View>
           {buscandoCep && <ActivityIndicator size="small" color={cores.primary} style={{ marginLeft: 10, marginTop: 28 }} />}
@@ -324,7 +316,6 @@ export default function CadastroScreen() {
           placeholderTextColor={placeholderCor(cores, isEscuro)}
           value={endereco}
           onChangeText={setEndereco}
-          onFocus={scrollToEnd}
         />
 
         <Text style={[styles.label, { color: cores.texto }]}>Bairro</Text>
@@ -334,7 +325,6 @@ export default function CadastroScreen() {
           placeholderTextColor={placeholderCor(cores, isEscuro)}
           value={bairro}
           onChangeText={setBairro}
-          onFocus={scrollToEnd}
         />
 
         <Text style={[styles.label, { color: cores.texto }]}>Microárea / Prontuário</Text>
@@ -344,7 +334,6 @@ export default function CadastroScreen() {
           placeholderTextColor={placeholderCor(cores, isEscuro)}
           value={microareaProntuario}
           onChangeText={setMicroareaProntuario}
-          onFocus={scrollToEnd}
         />
 
         {/* ── Condições de Saúde ──────────────────────── */}
@@ -406,7 +395,6 @@ export default function CadastroScreen() {
               value={idadeGestacional}
               onChangeText={setIdadeGestacional}
               keyboardType="numeric"
-              onFocus={scrollToEnd}
             />
 
             <Text style={[styles.label, { color: cores.texto }]}>Nº de consultas pré-natal</Text>
@@ -417,7 +405,6 @@ export default function CadastroScreen() {
               value={consultasPreNatal}
               onChangeText={setConsultasPreNatal}
               keyboardType="numeric"
-              onFocus={scrollToEnd}
             />
 
             <Text style={[styles.label, { color: cores.texto }]}>DPP (Data prevista do parto)</Text>
@@ -429,7 +416,6 @@ export default function CadastroScreen() {
               onChangeText={handleDppChange}
               keyboardType="numeric"
               maxLength={10}
-              onFocus={scrollToEnd}
             />
           </View>
         )}
@@ -460,7 +446,6 @@ export default function CadastroScreen() {
               value={pesoNascer}
               onChangeText={setPesoNascer}
               keyboardType="decimal-pad"
-              onFocus={scrollToEnd}
             />
 
             <View style={[styles.switchRow, { backgroundColor: cores.input, borderColor: '#43A047' }]}>
@@ -510,7 +495,6 @@ export default function CadastroScreen() {
           onChangeText={setObservacoes}
           multiline
           textAlignVertical="top"
-          onFocus={scrollToEnd}
         />
 
         {/* ── Botão ───────────────────────────────────── */}
