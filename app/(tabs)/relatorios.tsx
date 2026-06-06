@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Share, Platform
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, FlatList, Alert, Share, Platform
 } from 'react-native';
 import { usePacientes, Paciente } from '@/src/contexts/PacienteContext';
 import { useVisitas, Visita } from '@/src/contexts/VisitaContext';
@@ -16,7 +16,8 @@ export default function RelatoriosScreen() {
   const { cores } = useTema();
   const { showToast } = useToast();
   const [periodo, setPeriodo] = useState<Periodo>('geral');
-  const [aba, setAba] = useState<'geral' | 'visitas'>('geral');
+  const [aba, setAba] = useState<'geral' | 'historico'>('geral');
+  const [expandido, setExpandido] = useState<string | null>(null);
 
   useEffect(() => {
     carregarPacientes();
@@ -27,7 +28,6 @@ export default function RelatoriosScreen() {
   const diabeticos = pacientes.filter(p => p.diabetes).length;
   const gestantes = pacientes.filter(p => p.gestante).length;
 
-  // Visitas do período
   const visitasFiltradas = () => {
     const hoje = new Date();
     let corte: Date;
@@ -43,6 +43,21 @@ export default function RelatoriosScreen() {
 
   const visitasPeriodo = visitasFiltradas();
   const pacientesComVisitas = new Set(visitasPeriodo.map(v => v.pacienteId)).size;
+
+  // Agrupa visitas por paciente para o historico
+  const visitasAgrupadas = useMemo(() => {
+    const mapa = new Map<string, { pacienteNome: string; visitas: Visita[] }>();
+    [...visitas].reverse().forEach(v => {
+      if (!mapa.has(v.pacienteId)) {
+        mapa.set(v.pacienteId, { pacienteNome: v.pacienteNome || 'Desconhecido', visitas: [] });
+      }
+      mapa.get(v.pacienteId)!.visitas.push(v);
+    });
+    return Array.from(mapa.entries())
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.visitas.length - a.visitas.length);
+  }, [visitas]);
+
   const visitasPorMotivo = (motivo: string) =>
     visitasPeriodo.filter(v => v.motivo === motivo).length;
 
@@ -51,7 +66,7 @@ export default function RelatoriosScreen() {
     return agora.toLocaleString('pt-BR');
   };
 
-  const periodoLabel = periodo === 'geral' ? 'GERAL' : periodo === 'mes' ? 'ÚLTIMOS 30 DIAS' : 'ÚLTIMOS 7 DIAS';
+  const periodoLabel = periodo === 'geral' ? 'GERAL' : periodo === 'mes' ? 'ULTIMOS 30 DIAS' : 'ULTIMOS 7 DIAS';
 
   const exportarDados = async () => {
     try {
@@ -62,19 +77,19 @@ export default function RelatoriosScreen() {
       const totalGestantes = pacientes.filter(p => p.gestante).length;
 
       const cabecalhoGeral = [
-        '=== RELATÓRIO SAÚDE DO GUETO ===',
+        '=== RELATORIO SAUDE DO GUETO ===',
         `Gerado em: ${agora}`,
-        `Período: ${periodoLabel}`,
+        `Periodo: ${periodoLabel}`,
         '',
         '--- RESUMO ---',
         `Total de pacientes;${pacientes.length}`,
         `Total de visitas;${pacientesVis}`,
         `Hipertensos;${totalHipertensos}`,
-        `Diabéticos;${totalDiabeticos}`,
+        `Diabeticos;${totalDiabeticos}`,
         `Gestantes;${totalGestantes}`,
         '',
         '--- PACIENTES ---',
-        'Nome;CPF;Cartão SUS;Telefone;Endereço;Número;Bairro;Microárea;Data Nasc;Idade;Hipertensão;Diabetes;Gestante;Observações;Data Cadastro'
+        'Nome;CPF;Carta SUS;Telefone;Endereco;Numero;Bairro;Microarea;Data Nasc;Idade;Hipertensao;Diabetes;Gestante;Observacoes;Data Cadastro'
       ].join('\n');
 
       const calcIdade = (dn: string) => {
@@ -95,9 +110,9 @@ export default function RelatoriosScreen() {
           p.microarea || '',
           p.dataNascimento || '',
           calcIdade(p.dataNascimento || ''),
-          p.hipertensao ? 'Sim' : 'Não',
-          p.diabetes ? 'Sim' : 'Não',
-          p.gestante ? 'Sim' : 'Não',
+          p.hipertensao ? 'Sim' : 'Nao',
+          p.diabetes ? 'Sim' : 'Nao',
+          p.gestante ? 'Sim' : 'Nao',
           `"${p.observacoes || ''}"`,
           p.dataCadastro || ''
         ].join(';')
@@ -107,7 +122,7 @@ export default function RelatoriosScreen() {
 
       await Share.share({
         message: csv,
-        title: 'Relatório Saúde do Gueto - Completo',
+        title: 'Relatorio Saude do Gueto - Completo',
       });
     } catch {
       showToast('Erro ao exportar dados', 'error');
@@ -124,9 +139,9 @@ export default function RelatoriosScreen() {
       const enc = filtradas.filter(v => v.motivo === 'encaminhamento').length;
 
       const cabecalhoGeral = [
-        '=== RELATÓRIO DE VISITAS - SAÚDE DO GUETO ===',
+        '=== RELATORIO DE VISITAS - SAUDE DO GUETO ===',
         `Gerado em: ${agora}`,
-        `Período: ${periodoLabel}`,
+        `Periodo: ${periodoLabel}`,
         '',
         '--- RESUMO DE VISITAS ---',
         `Total de visitas;${filtradas.length}`,
@@ -137,7 +152,7 @@ export default function RelatoriosScreen() {
         `Encaminhamentos;${enc}`,
         '',
         '--- DETALHAMENTO ---',
-        'Data;Hora;Paciente;Motivo;PA Sistólica;PA Diastólica;Glicemia;Vacinas;Peso;Altura;Observações;Encaminhado para;Próxima Visita'
+        'Data;Hora;Paciente;Motivo;PA Sistolica;PA Diastolica;Glicemia;Vacinas;Peso;Altura;Observacoes;Encaminhado para;Proxima Visita'
       ].join('\n');
 
       const motivonome = (m: string) => {
@@ -154,7 +169,7 @@ export default function RelatoriosScreen() {
           v.pressaoSistolica || '',
           v.pressaoDiastolica || '',
           v.glicemia || '',
-          v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Não',
+          v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Nao',
           v.peso || '',
           v.altura || '',
           `"${v.observacoes || ''}"`,
@@ -167,10 +182,10 @@ export default function RelatoriosScreen() {
 
       await Share.share({
         message: csv,
-        title: 'Relatório de Visitas - Saúde do Gueto - Completo',
+        title: 'Relatorio de Visitas - Saude do Gueto - Completo',
       });
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível exportar os dados');
+      Alert.alert('Erro', 'Nao foi possivel exportar os dados');
     }
   };
 
@@ -185,20 +200,20 @@ export default function RelatoriosScreen() {
       const pacVis = new Set(visitasPeriodo.map(v => v.pacienteId)).size;
 
       const cabecalho = [
-        '=== RELATÓRIO COMPLETO - SAÚDE DO GUETO ===',
+        '=== RELATORIO COMPLETO - SAUDE DO GUETO ===',
         `Gerado em: ${agora}`,
-        `Período: ${periodoLabel}`,
+        `Periodo: ${periodoLabel}`,
         '',
         '--- RESUMO GERAL ---',
         `Pacientes cadastrados;${p}`,
         `Hipertensos;${hv}`,
-        `Diabéticos;${dv}`,
+        `Diabeticos;${dv}`,
         `Gestantes;${gv}`,
         `Total de visitas;${totVis}`,
         `Pacientes visitados;${pacVis}`,
         '',
         '--- PACIENTES ---',
-        'Nome;CPF;Cartão SUS;Telefone;Endereço;Número;Bairro;Microárea;Data Nasc;Idade;Hipertensão;Diabetes;Gestante;Observações;Data Cadastro',
+        'Nome;CPF;Carta SUS;Telefone;Endereco;Numero;Bairro;Microarea;Data Nasc;Idade;Hipertensao;Diabetes;Gestante;Observacoes;Data Cadastro',
       ].join('\n');
 
       const calcIdade = (dn: string) => {
@@ -208,7 +223,7 @@ export default function RelatoriosScreen() {
       };
 
       const linhasP = pacientes.map(p =>
-        [`"${p.nome}"`, p.cpf || '', p.cartaoSUS || '', p.telefone || '', `"${p.endereco || ''}"`, p.numero || '', `"${p.bairro || ''}"`, p.microarea || '', p.dataNascimento || '', calcIdade(p.dataNascimento || ''), p.hipertensao ? 'Sim' : 'Não', p.diabetes ? 'Sim' : 'Não', p.gestante ? 'Sim' : 'Não', `"${p.observacoes || ''}"`, p.dataCadastro || ''].join(';')
+        [`"${p.nome}"`, p.cpf || '', p.cartaoSUS || '', p.telefone || '', `"${p.endereco || ''}"`, p.numero || '', `"${p.bairro || ''}"`, p.microarea || '', p.dataNascimento || '', calcIdade(p.dataNascimento || ''), p.hipertensao ? 'Sim' : 'Nao', p.diabetes ? 'Sim' : 'Nao', p.gestante ? 'Sim' : 'Nao', `"${p.observacoes || ''}"`, p.dataCadastro || ''].join(';')
       ).join('\n');
 
       const motivonome = (m: string) => {
@@ -216,44 +231,44 @@ export default function RelatoriosScreen() {
         return map[m] || m;
       };
 
-      const secVisitas = '\n\n--- VISITAS ---\nData;Hora;Paciente;Motivo;PA Sistólica;PA Diastólica;Glicemia;Vacinas;Peso;Altura;Observações;Encaminhado para;Próxima Visita';
+      const secVisitas = '\n\n--- VISITAS ---\nData;Hora;Paciente;Motivo;PA Sistolica;PA Diastolica;Glicemia;Vacinas;Peso;Altura;Observacoes;Encaminhado para;Proxima Visita';
 
       const linhasV = visitasPeriodo.map(v =>
-        [v.data || '', v.hora || '', `"${v.pacienteNome || ''}"`, motivonome(v.motivo || ''), v.pressaoSistolica || '', v.pressaoDiastolica || '', v.glicemia || '', v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Não', v.peso || '', v.altura || '', `"${v.observacoes || ''}"`, `"${v.encaminhamento || ''}"`, v.proximaVisita || ''].join(';')
+        [v.data || '', v.hora || '', `"${v.pacienteNome || ''}"`, motivonome(v.motivo || ''), v.pressaoSistolica || '', v.pressaoDiastolica || '', v.glicemia || '', v.vacinaEmDia === undefined ? '' : v.vacinaEmDia ? 'Sim' : 'Nao', v.peso || '', v.altura || '', `"${v.observacoes || ''}"`, `"${v.encaminhamento || ''}"`, v.proximaVisita || ''].join(';')
       ).join('\n');
 
       const csv = cabecalho + '\n' + linhasP + secVisitas + '\n' + linhasV;
 
       await Share.share({
         message: csv,
-        title: 'Relatório Completo - Saúde do Gueto',
+        title: 'Relatorio Completo - Saude do Gueto',
       });
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível exportar os dados');
+      Alert.alert('Erro', 'Nao foi possivel exportar os dados');
     }
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
-      <Text style={[styles.title, { color: cores.primary }]}>📊 Relatórios</Text>
+      <Text style={[styles.title, { color: cores.primary }]}>Relatorios</Text>
 
-      {/* ── Abas: Geral | Visitas ── */}
+      {/* Abas: Geral | Historico de Visitas */}
       <View style={styles.abaRow}>
         <TouchableOpacity
           style={[styles.abaBtn, aba === 'geral' && styles.abaAtiva]}
           onPress={() => setAba('geral')}
         >
-          <Text style={[styles.abaText, aba === 'geral' && styles.abaTextAtiva]}>📋 Geral</Text>
+          <Text style={[styles.abaText, aba === 'geral' && styles.abaTextAtiva]}>Geral</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.abaBtn, aba === 'visitas' && styles.abaAtiva]}
-          onPress={() => setAba('visitas')}
+          style={[styles.abaBtn, aba === 'historico' && styles.abaAtiva]}
+          onPress={() => setAba('historico')}
         >
-          <Text style={[styles.abaText, aba === 'visitas' && styles.abaTextAtiva]}>🏠 Visitas</Text>
+          <Text style={[styles.abaText, aba === 'historico' && styles.abaTextAtiva]}>Historico de Visitas</Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── Seletor de Período ── */}
+      {/* Seletor de Periodo */}
       <View style={styles.periodoRow}>
         {(['geral', 'mes', 'semana'] as const).map(p => (
           <TouchableOpacity
@@ -262,25 +277,21 @@ export default function RelatoriosScreen() {
             onPress={() => setPeriodo(p)}
           >
             <Text style={[styles.periodoText, periodo === p && styles.periodoTextAtivo]}>
-              {p === 'geral' ? 'Geral' : p === 'mes' ? 'Último Mês' : 'Última Semana'}
+              {p === 'geral' ? 'Geral' : p === 'mes' ? 'Ultimo Mes' : 'Ultima Semana'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* ════════════════════════════════════════════════ */}
-      {/* ABA GERAL                                      */}
-      {/* ════════════════════════════════════════════════ */}
+      {/* ABA GERAL */}
       {aba === 'geral' && (
         <>
-          {/* Card Principal */}
           <View style={styles.cardTotal}>
             <Text style={styles.cardTotalNumero}>{pacientes.length}</Text>
             <Text style={styles.cardTotalLabel}>Pacientes Cadastrados</Text>
           </View>
 
-          {/* Grid Condições */}
-          <Text style={styles.sectionTitle}>🩺 Condições de Saúde</Text>
+          <Text style={styles.sectionTitle}>Condicoes de Saude</Text>
           <View style={styles.grid}>
             <View style={[styles.card, { backgroundColor: cores.primaryLight }]}>
               <Text style={styles.cardNumero}>{hipertensos}</Text>
@@ -291,7 +302,7 @@ export default function RelatoriosScreen() {
             </View>
             <View style={[styles.card, { backgroundColor: 'rgba(0, 230, 118, 0.12)' }]}>
               <Text style={styles.cardNumero}>{diabeticos}</Text>
-              <Text style={styles.cardLabel}>Diabéticos</Text>
+              <Text style={styles.cardLabel}>Diabeticos</Text>
               <Text style={styles.cardPct}>
                 {pacientes.length > 0 ? Math.round((diabeticos / pacientes.length) * 100) : 0}%
               </Text>
@@ -305,8 +316,7 @@ export default function RelatoriosScreen() {
             </View>
           </View>
 
-          {/* Visitas */}
-          <Text style={styles.sectionTitle}>🏠 Visitas Domiciliares</Text>
+          <Text style={styles.sectionTitle}>Visitas Domiciliares</Text>
           <View style={styles.visitasCard}>
             <View style={styles.visitaRow}>
               <Text style={styles.visitaLabel}>Total de visitas:</Text>
@@ -319,109 +329,121 @@ export default function RelatoriosScreen() {
             <View style={styles.divisor} />
             <Text style={styles.subSectionTitle}>Por motivo:</Text>
             <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>🔄 Rotina</Text>
+              <Text style={styles.visitaLabel}>Rotina</Text>
               <Text style={styles.visitaValor}>{visitasPorMotivo('rotina')}</Text>
             </View>
             <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>🔙 Retorno</Text>
+              <Text style={styles.visitaLabel}>Retorno</Text>
               <Text style={styles.visitaValor}>{visitasPorMotivo('retorno')}</Text>
             </View>
             <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>🤒 Queixa</Text>
+              <Text style={styles.visitaLabel}>Queixa</Text>
               <Text style={styles.visitaValor}>{visitasPorMotivo('queixa')}</Text>
             </View>
             <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>📋 Encaminhamento</Text>
+              <Text style={styles.visitaLabel}>Encaminhamento</Text>
               <Text style={styles.visitaValor}>{visitasPorMotivo('encaminhamento')}</Text>
             </View>
           </View>
 
-          {/* Exportação */}
-          <Text style={styles.sectionTitle}>📤 Exportar Dados</Text>
+          <Text style={styles.sectionTitle}>Exportar Dados</Text>
           <View style={styles.exportRow}>
             <TouchableOpacity style={styles.exportBtn} onPress={exportarDados}>
-              <Text style={styles.exportText}>📋 Pacientes</Text>
+              <Text style={styles.exportText}>Pacientes</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.exportBtn} onPress={exportarVisitas}>
-              <Text style={styles.exportText}>🏠 Visitas</Text>
+              <Text style={styles.exportText}>Visitas</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarRelatorioCompleto}>
-            <Text style={styles.exportTextCompleto}>📑 Relatório Completo (CSV)</Text>
+            <Text style={styles.exportTextCompleto}>Relatorio Completo (CSV)</Text>
           </TouchableOpacity>
           <Text style={styles.exportInfo}>
-            CSV profissional com resumo + dados — compatível com Excel, Google Sheets e e-SUS
+            CSV profissional com resumo + dados - compativel com Excel, Google Sheets e e-SUS
           </Text>
         </>
       )}
 
-      {/* ════════════════════════════════════════════════ */}
-      {/* ABA VISITAS                                    */}
-      {/* ════════════════════════════════════════════════ */}
-      {aba === 'visitas' && (
+      {/* ABA HISTORICO DE VISITAS */}
+      {aba === 'historico' && (
         <>
-          {/* Card Total de Visitas */}
-          <View style={styles.cardTotal}>
-            <Text style={styles.cardTotalNumero}>{visitasPeriodo.length}</Text>
-            <Text style={styles.cardTotalLabel}>Total de Visitas</Text>
-          </View>
+          <Text style={styles.sectionTitle}>Historico de Visitas</Text>
+          <Text style={styles.exportInfo}>
+            Pacientes com visitas registradas - toque para expandir e ver detalhes
+          </Text>
 
-          {/* Por Motivo */}
-          <Text style={styles.sectionTitle}>📌 Por Motivo</Text>
-          <View style={styles.grid}>
-            <View style={[styles.card, { backgroundColor: 'rgba(0, 230, 118, 0.12)' }]}>
-              <Text style={styles.cardNumero}>{visitasPorMotivo('rotina')}</Text>
-              <Text style={styles.cardLabel}>Rotina</Text>
-            </View>
-            <View style={[styles.card, { backgroundColor: 'rgba(0, 176, 255, 0.12)' }]}>
-              <Text style={styles.cardNumero}>{visitasPorMotivo('retorno')}</Text>
-              <Text style={styles.cardLabel}>Retorno</Text>
-            </View>
-            <View style={[styles.card, { backgroundColor: 'rgba(255, 152, 0, 0.12)' }]}>
-              <Text style={styles.cardNumero}>{visitasPorMotivo('queixa')}</Text>
-              <Text style={styles.cardLabel}>Queixa</Text>
-            </View>
-          </View>
-          <View style={[styles.card, { backgroundColor: 'rgba(233, 30, 99, 0.12)', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 20 }]}>
-            <Text style={styles.cardNumero}>{visitasPorMotivo('encaminhamento')}</Text>
-            <Text style={styles.cardLabel}>Encaminhamentos</Text>
-          </View>
-
-          {/* Indicadores */}
-          <Text style={styles.sectionTitle}>📈 Indicadores</Text>
-          <View style={styles.visitasCard}>
-            <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>Pacientes visitados:</Text>
-              <Text style={styles.visitaValor}>{pacientesComVisitas}</Text>
-            </View>
-            <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>Média de visitas/dia:</Text>
-              <Text style={styles.visitaValor}>
-                {periodo === 'semana'
-                  ? (visitasPeriodo.length / 7).toFixed(1)
-                  : periodo === 'mes'
-                    ? (visitasPeriodo.length / 30).toFixed(1)
-                    : visitasPeriodo.length > 0 ? '—' : '0'}
+          {visitasAgrupadas.length === 0 ? (
+            <View style={[styles.visitasCard, { padding: 30, alignItems: 'center' }]}>
+              <Text style={{ fontSize: 32, marginBottom: 10 }}>Vazio</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, textAlign: 'center' }}>
+                Nenhuma visita registrada ainda
               </Text>
             </View>
-            <View style={styles.divisor} />
-            <View style={styles.visitaRow}>
-              <Text style={styles.visitaLabel}>Taxa de cobertura:</Text>
-              <Text style={styles.visitaValor}>
-                {pacientes.length > 0
-                  ? `${Math.round((pacientesComVisitas / pacientes.length) * 100)}%`
-                  : '0%'}
-              </Text>
-            </View>
-          </View>
+          ) : (
+            visitasAgrupadas.map((grupo) => (
+              <View key={grupo.id} style={[styles.visitasCard, { marginBottom: 12 }]}>
+                <TouchableOpacity
+                  onPress={() => setExpandido(expandido === grupo.id ? null : grupo.id)}
+                  style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>{grupo.pacienteNome}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 2 }}>
+                      {grupo.visitas.length} visita(s)
+                    </Text>
+                  </View>
+                  <Text style={{ color: '#00E676', fontSize: 18 }}>{expandido === grupo.id ? '▲' : '▼'}</Text>
+                </TouchableOpacity>
 
-          {/* Exportar Visitas */}
-          <Text style={styles.sectionTitle}>📤 Exportar</Text>
+                {expandido === grupo.id && (
+                  <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                    {grupo.visitas.map((v, i) => (
+                      <View key={v.id || i} style={{
+                        backgroundColor: 'rgba(255,255,255,0.04)',
+                        borderRadius: 8,
+                        padding: 12,
+                        marginBottom: 8,
+                      }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ color: '#00E676', fontWeight: '600' }}>{v.data || '-'}</Text>
+                          <Text style={{ color: 'rgba(255,255,255,0.5)' }}>{v.hora || '-'}</Text>
+                        </View>
+                        {v.motivo && (
+                          <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
+                            Motivo: {v.motivo}
+                          </Text>
+                        )}
+                        {(v.pressaoSistolica || v.glicemia) && (
+                          <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 2, fontSize: 13 }}>
+                            {v.pressaoSistolica ? `PA: ${v.pressaoSistolica}/${v.pressaoDiastolica || '-'}` : ''}
+                            {v.pressaoSistolica && v.glicemia ? ' | ' : ''}
+                            {v.glicemia ? `Glicemia: ${v.glicemia}` : ''}
+                          </Text>
+                        )}
+                        {v.observacoes && (
+                          <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4, fontSize: 13, fontStyle: 'italic' }}>
+                            {v.observacoes}
+                          </Text>
+                        )}
+                        {v.encaminhamento && (
+                          <Text style={{ color: '#FF9800', marginTop: 4, fontSize: 13 }}>
+                            Encaminhado para: {v.encaminhamento}
+                          </Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+
+          <Text style={styles.sectionTitle}>Exportar</Text>
           <TouchableOpacity style={styles.exportBtnCompleto} onPress={exportarVisitas}>
-            <Text style={styles.exportTextCompleto}>📑 Relatório de Visitas (CSV)</Text>
+            <Text style={styles.exportTextCompleto}>Relatorio de Visitas (CSV)</Text>
           </TouchableOpacity>
           <Text style={styles.exportInfo}>
-            CSV detalhado com todas as visitas do período — compatível com Excel, Google Sheets e e-SUS
+            CSV detalhado com todas as visitas do periodo
           </Text>
         </>
       )}
@@ -445,7 +467,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
-  // ── Abas ──
   abaRow: {
     flexDirection: 'row',
     gap: 8,
@@ -472,7 +493,6 @@ const styles = StyleSheet.create({
   abaTextAtiva: {
     color: '#0B1220',
   },
-  // ── Período ──
   periodoRow: {
     flexDirection: 'row',
     gap: 8,
@@ -499,7 +519,6 @@ const styles = StyleSheet.create({
   periodoTextAtivo: {
     color: '#0B1220',
   },
-  // ── Cards ──
   cardTotal: {
     backgroundColor: '#00E676',
     borderRadius: 16,
@@ -561,7 +580,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.4)',
     marginTop: 2,
   },
-  // ── Visitas ──
   visitasCard: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
@@ -589,7 +607,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     marginVertical: 8,
   },
-  // ── Export ──
   exportRow: {
     flexDirection: 'row',
     gap: 12,
