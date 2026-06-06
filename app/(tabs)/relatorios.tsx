@@ -215,7 +215,7 @@ export default function RelatoriosScreen() {
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
       <Text style={[styles.title, { color: cores.primary }]}>Relatorios</Text>
 
-      {/* Botoes: Geral | Historico de Visitas | Exportar e-SUS */}
+      {/* Botoes: Geral | Historico de Visitas */}
       <View style={styles.abaRow}>
         <TouchableOpacity
           style={[styles.abaBtn, styles.abaAtiva]}
@@ -228,12 +228,6 @@ export default function RelatoriosScreen() {
           onPress={() => router.push('/(tabs)/historico-visitas')}
         >
           <Text style={styles.abaTextSec}>Historico de Visitas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.abaBtnSec]}
-          onPress={() => router.push('/(tabs)/esus-export')}
-        >
-          <Text style={styles.abaTextSec}>Exportar</Text>
         </TouchableOpacity>
       </View>
 
