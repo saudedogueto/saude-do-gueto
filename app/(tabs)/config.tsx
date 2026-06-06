@@ -66,19 +66,19 @@ export default function ConfigScreen() {
       {/* Informações */}
       <View style={[styles.card, { backgroundColor: cores.card }]}>
         <Text style={[styles.sectionTitle, { color: cores.primary }]}>ℹ️ Sobre</Text>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, { borderBottomColor: cores.borda }]}>
           <Text style={[styles.infoLabel, { color: cores.textoSecundario }]}>App:</Text>
           <Text style={[styles.infoValor, { color: cores.texto }]}>Saúde do Gueto</Text>
         </View>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, { borderBottomColor: cores.borda }]}>
           <Text style={[styles.infoLabel, { color: cores.textoSecundario }]}>Versão:</Text>
           <Text style={[styles.infoValor, { color: cores.texto }]}>2.0</Text>
         </View>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, { borderBottomColor: cores.borda }]}>
           <Text style={[styles.infoLabel, { color: cores.textoSecundario }]}>Desenvolvido para:</Text>
           <Text style={[styles.infoValor, { color: cores.texto }]}>ACS - Saúde da Família</Text>
         </View>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, { borderBottomColor: cores.borda }]}>
           <Text style={[styles.infoLabel, { color: cores.textoSecundario }]}>Armazenamento:</Text>
           <Text style={[styles.infoValor, { color: cores.texto }]}>Local (offline)</Text>
         </View>
@@ -86,15 +86,15 @@ export default function ConfigScreen() {
 
       {/* Perigo */}
       <View style={[styles.card, { backgroundColor: cores.card }]}>
-        <Text style={[styles.sectionTitle, { color: '#E53935' }]}>⚠️ Área de Risco</Text>
+        <Text style={[styles.sectionTitle, { color: '#FF5252' }]}>⚠️ Área de Risco</Text>
         <Text style={[styles.desc, { color: cores.textoSecundario }]}>
           Limpa todos os pacientes, visitas e famílias. A senha permanece.
         </Text>
         <TouchableOpacity
-          style={styles.btnDanger}
+          style={[styles.btnDanger, { backgroundColor: 'rgba(255, 82, 82, 0.1)', borderColor: '#FF5252' }]}
           onPress={limparDados}
         >
-          <Text style={styles.btnDangerText}>🗑️ Limpar Todos os Dados</Text>
+          <Text style={[styles.btnDangerText, { color: '#FF5252' }]}>🗑️ Limpar Todos os Dados</Text>
         </TouchableOpacity>
       </View>
 
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   sectionTitle: {
@@ -172,7 +172,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   infoLabel: {
     fontSize: 14,
@@ -182,15 +181,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   btnDanger: {
-    backgroundColor: '#FFEBEE',
     borderWidth: 2,
-    borderColor: '#E53935',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
   },
   btnDangerText: {
-    color: '#E53935',
     fontWeight: 'bold',
     fontSize: 15,
   },

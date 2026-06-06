@@ -13,6 +13,11 @@ export type Paciente = {
   gestante: boolean;
   observacoes: string;
   endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  sexo?: string;
+  nomeMae?: string;
   microarea?: string;
   microareaProntuario?: string;
   foto?: string;

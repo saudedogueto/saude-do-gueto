@@ -85,66 +85,66 @@ export default function BackupScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
-      <Text style={styles.title}>💾 Backup & Sincronia</Text>
+      <Text style={[styles.title, { color: cores.primary }]}>💾 Backup & Sincronia</Text>
 
       {/* Status */}
-      <View style={styles.statusCard}>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>📊 Tamanho dos dados:</Text>
-          <Text style={styles.statusValor}>{tamanhoDados}</Text>
+      <View style={[styles.statusCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <View style={[styles.statusRow, { borderBottomColor: cores.borda }]}>
+          <Text style={[styles.statusLabel, { color: cores.textoSecundario }]}>📊 Tamanho dos dados:</Text>
+          <Text style={[styles.statusValor, { color: cores.texto }]}>{tamanhoDados}</Text>
         </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>🕐 Último backup:</Text>
-          <Text style={styles.statusValor}>{ultimoBackup || 'Nunca'}</Text>
+        <View style={[styles.statusRow, { borderBottomColor: cores.borda }]}>
+          <Text style={[styles.statusLabel, { color: cores.textoSecundario }]}>🕐 Último backup:</Text>
+          <Text style={[styles.statusValor, { color: cores.texto }]}>{ultimoBackup || 'Nunca'}</Text>
         </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>📍 Armazenamento:</Text>
-          <Text style={styles.statusValor}>Local (offline)</Text>
+        <View style={[styles.statusRow, { borderBottomColor: cores.borda }]}>
+          <Text style={[styles.statusLabel, { color: cores.textoSecundario }]}>📍 Armazenamento:</Text>
+          <Text style={[styles.statusValor, { color: cores.texto }]}>Local (offline)</Text>
         </View>
       </View>
 
       {/* Backup Manual */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📤 Backup Manual</Text>
-        <Text style={styles.sectionDesc}>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.texto }]}>📤 Backup Manual</Text>
+        <Text style={[styles.sectionDesc, { color: cores.textoSecundario }]}>
           Exporta todos os dados (pacientes, visitas, famílias) como arquivo JSON.
           Salve em um local seguro (Google Drive, email, nuvem).
         </Text>
         <TouchableOpacity
-          style={[styles.button, salvando && styles.buttonDisabled]}
+          style={[styles.button, { backgroundColor: cores.primary }, salvando && styles.buttonDisabled]}
           onPress={fazerBackup}
           disabled={salvando}
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: '#0B1220' }]}>
             {salvando ? 'Exportando...' : '📦 Fazer Backup Agora'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Restaurar */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📥 Restaurar Backup</Text>
-        <Text style={styles.sectionDesc}>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.texto }]}>📥 Restaurar Backup</Text>
+        <Text style={[styles.sectionDesc, { color: cores.textoSecundario }]}>
           Restaura dados a partir de um arquivo de backup anterior.
           ATENÇÃO: substitui todos os dados atuais.
         </Text>
         <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
+          style={[styles.button, styles.buttonOutline, { borderColor: cores.primary, backgroundColor: 'transparent' }]}
           onPress={restaurarBackup}
         >
-          <Text style={[styles.buttonText, { color: '#FF8C00' }]}>
+          <Text style={[styles.buttonText, { color: cores.primary }]}>
             🔄 Restaurar Dados
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Dicas */}
-      <View style={styles.dicasCard}>
-        <Text style={styles.dicasTitle}>💡 Dicas</Text>
-        <Text style={styles.dica}>• Faça backup pelo menos 1x por semana</Text>
-        <Text style={styles.dica}>• Salve o arquivo no Google Drive ou email</Text>
-        <Text style={styles.dica}>• O backup contém TODOS os dados do app</Text>
-        <Text style={styles.dica}>• Para restaurar, use um computador para copiar o JSON</Text>
+      <View style={[styles.dicasCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.dicasTitle, { color: cores.primary }]}>💡 Dicas</Text>
+        <Text style={[styles.dica, { color: cores.textoSecundario }]}>• Faça backup pelo menos 1x por semana</Text>
+        <Text style={[styles.dica, { color: cores.textoSecundario }]}>• Salve o arquivo no Google Drive ou email</Text>
+        <Text style={[styles.dica, { color: cores.textoSecundario }]}>• O backup contém TODOS os dados do app</Text>
+        <Text style={[styles.dica, { color: cores.textoSecundario }]}>• Para restaurar, use um computador para copiar o JSON</Text>
       </View>
 
       <View style={{ height: 40 }} />
@@ -155,61 +155,61 @@ export default function BackupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     padding: 15,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FF8C00',
     textAlign: 'center',
     marginTop: 15,
     marginBottom: 20,
   },
   statusCard: {
-    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   statusLabel: {
     fontSize: 14,
-    color: '#555',
   },
   statusValor: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
   },
   section: {
-    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 15,
+    borderWidth: 1,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 6,
   },
   sectionDesc: {
     fontSize: 13,
-    color: '#888',
     lineHeight: 20,
     marginBottom: 15,
   },
   button: {
-    backgroundColor: '#FF8C00',
     height: 48,
     borderRadius: 10,
     justifyContent: 'center',
@@ -219,30 +219,25 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonOutline: {
-    backgroundColor: '#FFF',
     borderWidth: 2,
-    borderColor: '#FF8C00',
   },
   buttonText: {
-    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
   dicasCard: {
-    backgroundColor: '#FFF8E1',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
   },
   dicasTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#E65100',
     marginBottom: 8,
   },
   dica: {
     fontSize: 13,
-    color: '#795548',
     lineHeight: 22,
     paddingLeft: 8,
   },

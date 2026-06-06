@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
   TextInput, Alert, Switch
@@ -8,6 +8,7 @@ import { useVisitas, Visita } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { useToast } from '@/src/components/Toast';
 import { router, useLocalSearchParams } from 'expo-router';
+import { NeonButton } from '../../src/components/NeonButton';
 
 type Aba = 'dados' | 'gestante' | 'visitas' | 'visita';
 export default function DetalhesScreen() {
@@ -50,10 +51,8 @@ export default function DetalhesScreen() {
   if (!paciente) {
     return (
       <View style={[styles.container, { backgroundColor: cores.fundo, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={styles.notFound}>Paciente não encontrado</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Voltar</Text>
-        </TouchableOpacity>
+        <Text style={[styles.notFound, { color: cores.textoSecundario }]}>Paciente não encontrado</Text>
+        <NeonButton titulo="Voltar" onPress={() => router.back()} fullWidth />
       </View>
     );
   }
@@ -73,6 +72,7 @@ export default function DetalhesScreen() {
         glicemia: vGlicemia,
         medicamentos: vMedicamentos,
         observacoes: vObs,
+        realizada: true,
       });
       // Atualiza ultimaVisita
       await salvarPaciente({
@@ -109,7 +109,7 @@ export default function DetalhesScreen() {
 
   const renderFoto = () => {
     if (!paciente.foto) return null;
-    return <Image source={{ uri: paciente.foto }} style={styles.fotoDetalhe} />;
+    return <Image source={{ uri: paciente.foto }} style={[styles.fotoDetalhe, { borderColor: cores.primary }]} />;
   };
 
   const renderAbas = () => (
@@ -117,10 +117,10 @@ export default function DetalhesScreen() {
       {(['dados', ...(paciente.gestante ? ['gestante'] : []), 'visitas', 'visita'] as Aba[]).map(a => (
         <TouchableOpacity
           key={a}
-          style={[styles.abaBtn, aba === a && styles.abaAtiva]}
+          style={[styles.abaBtn, { backgroundColor: aba === a ? cores.primary : cores.card }, aba === a && styles.abaAtiva]}
           onPress={() => setAba(a)}
         >
-          <Text style={[styles.abaText, aba === a && styles.abaTextAtiva]}>
+          <Text style={[styles.abaText, { color: aba === a ? cores.fundo : cores.textoSecundario }]}>
             {a === 'dados' ? '📋 Dados' : a === 'gestante' ? '🤰 Gestante' : a === 'visitas' ? '📊 Visitas' : '➕ Visita'}
           </Text>
         </TouchableOpacity>
@@ -130,8 +130,8 @@ export default function DetalhesScreen() {
 
   const renderDados = () => (
     <>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📋 Dados Pessoais</Text>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.primary }]}>📋 Dados Pessoais</Text>
         {[
           ['CPF', paciente.cpf || '---'],
           ['Cartão SUS', paciente.cartaoSUS || '---'],
@@ -142,15 +142,15 @@ export default function DetalhesScreen() {
           ['Cadastrado em', paciente.dataCadastro],
           ['Última visita', paciente.ultimaVisita || 'Nenhuma'],
         ].map(([label, value]) => (
-          <View key={label} style={styles.row}>
-            <Text style={styles.label}>{label}:</Text>
-            <Text style={styles.value}>{value}</Text>
+          <View key={label} style={[styles.row, { borderBottomColor: cores.borda }]}>
+            <Text style={[styles.label, { color: cores.textoSecundario }]}>{label}:</Text>
+            <Text style={[styles.value, { color: cores.texto }]}>{value}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🩺 Condições de Saúde</Text>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.primary }]}>🩺 Condições de Saúde</Text>
         {([
           ['🔴 Hipertensão', paciente.hipertensao],
           ['🔵 Diabetes', paciente.diabetes],
@@ -158,8 +158,8 @@ export default function DetalhesScreen() {
           ['👶 Menor de 2 anos', paciente.menorDoisAnos],
         ] as [string, boolean][]).map(([label, ativo]) => (
           <View key={label} style={styles.condRow}>
-            <Text style={styles.condLabel}>{label}</Text>
-            <Text style={[styles.condValue, ativo ? styles.sim : styles.nao]}>
+            <Text style={[styles.condLabel, { color: cores.texto }]}>{label}</Text>
+            <Text style={[styles.condValue, ativo ? styles.sim : styles.nao, ativo ? { color: cores.primary } : { color: cores.textoSecundario }]}>
               {ativo ? '✅ Sim' : '❌ Não'}
             </Text>
           </View>
@@ -167,9 +167,9 @@ export default function DetalhesScreen() {
       </View>
 
       {paciente.observacoes ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📝 Observações</Text>
-          <Text style={styles.obs}>{paciente.observacoes}</Text>
+        <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+          <Text style={[styles.sectionTitle, { color: cores.primary }]}>📝 Observações</Text>
+          <Text style={[styles.obs, { color: cores.texto }]}>{paciente.observacoes}</Text>
         </View>
       ) : null}
     </>
@@ -178,30 +178,30 @@ export default function DetalhesScreen() {
   const renderGestante = () => (
     <>
       {/* Dados da gestação */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🤰 Acompanhamento Gestacional</Text>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.primary }]}>🤰 Acompanhamento Gestacional</Text>
         {[
           ['Idade gestacional', paciente.idadeGestacional || '---', 'semanas'],
           ['Consultas pré-natal', paciente.consultasPreNatal || '---'],
           ['DPP', paciente.dpp || '---'],
         ].map(([label, value, suffix]) => (
-          <View key={label} style={styles.row}>
-            <Text style={styles.label}>{label}:</Text>
-            <Text style={styles.value}>{value}{suffix ? ` ${suffix}` : ''}</Text>
+          <View key={label} style={[styles.row, { borderBottomColor: cores.borda }]}>
+            <Text style={[styles.label, { color: cores.textoSecundario }]}>{label}:</Text>
+            <Text style={[styles.value, { color: cores.texto }]}>{value}{suffix ? ` ${suffix}` : ''}</Text>
           </View>
         ))}
       </View>
 
       {/* Puerpério */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>👩‍🍼 Puerpério</Text>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.primary }]}>👩‍🍼 Puerpério</Text>
         <View style={[styles.switchRow, { backgroundColor: cores.input, borderColor: cores.borda }]}>
           <Text style={[styles.switchLabel, { color: cores.texto }]}>Em puerpério?</Text>
           <Switch
             value={puerperio}
             onValueChange={setPuerperio}
-            trackColor={{ false: '#DDD', true: '#8E24AA' }}
-            thumbColor={puerperio ? '#6A1B9A' : '#f4f3f4'}
+            trackColor={{ false: 'rgba(255,255,255,0.2)', true: cores.azulNeon }}
+            thumbColor={puerperio ? cores.azulNeon : 'rgba(255,255,255,0.4)'}
           />
         </View>
 
@@ -209,9 +209,9 @@ export default function DetalhesScreen() {
           <>
             <Text style={[styles.label, { color: cores.texto }]}>Data do parto</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: '#8E24AA' }]}
+              style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.azulNeon }]}
               placeholder="DD/MM/AAAA"
-              placeholderTextColor="#AAA"
+              placeholderTextColor={cores.textoSecundario}
               value={dataParto}
               onChangeText={(v) => {
                 const nums = v.replace(/\D/g, '').slice(0, 8);
@@ -226,7 +226,7 @@ export default function DetalhesScreen() {
               {['Normal', 'Cesárea'].map(op => (
                 <TouchableOpacity
                   key={op}
-                  style={[styles.optionChip, { backgroundColor: tipoParto === op ? '#8E24AA' : cores.input, borderColor: tipoParto === op ? '#8E24AA' : cores.borda }]}
+                  style={[styles.optionChip, { backgroundColor: tipoParto === op ? cores.azulNeon : cores.input, borderColor: tipoParto === op ? cores.azulNeon : cores.borda }]}
                   onPress={() => setTipoParto(op)}
                 >
                   <Text style={{ color: tipoParto === op ? '#FFF' : cores.texto, fontWeight: tipoParto === op ? 'bold' : 'normal' }}>{op}</Text>
@@ -239,7 +239,7 @@ export default function DetalhesScreen() {
               {['Sim', 'Não', 'Dificuldade'].map(op => (
                 <TouchableOpacity
                   key={op}
-                  style={[styles.optionChip, { backgroundColor: aleitamentoPuerp === op ? '#8E24AA' : cores.input, borderColor: aleitamentoPuerp === op ? '#8E24AA' : cores.borda }]}
+                  style={[styles.optionChip, { backgroundColor: aleitamentoPuerp === op ? cores.azulNeon : cores.input, borderColor: aleitamentoPuerp === op ? cores.azulNeon : cores.borda }]}
                   onPress={() => setAleitamentoPuerp(op)}
                 >
                   <Text style={{ color: aleitamentoPuerp === op ? '#FFF' : cores.texto, fontWeight: aleitamentoPuerp === op ? 'bold' : 'normal' }}>
@@ -249,50 +249,46 @@ export default function DetalhesScreen() {
               ))}
             </View>
 
-            <TouchableOpacity style={[styles.buttonSmall]} onPress={handleSalvarPuerperio}>
-              <Text style={styles.buttonText}>Salvar Puerpério</Text>
-            </TouchableOpacity>
+            <NeonButton titulo="Salvar Puerpério" onPress={handleSalvarPuerperio} cor={cores.azulNeon} fullWidth />
           </>
         )}
       </View>
 
       {/* Menor de 2 anos */}
       {paciente.menorDoisAnos && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>👶 Acompanhamento Infantil</Text>
+        <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+          <Text style={[styles.sectionTitle, { color: cores.primary }]}>👶 Acompanhamento Infantil</Text>
           {[
             ['Peso ao nascer', paciente.pesoNascer || '---', 'kg'],
             ['Caderneta de vacinação', paciente.vacinacaoDia ? '✅ Em dia' : '❌ Atrasada'],
             ['Aleitamento', paciente.aleitamentoBebe || '---'],
           ].map(([label, value]) => (
-            <View key={label} style={styles.row}>
-              <Text style={styles.label}>{label}:</Text>
-              <Text style={styles.value}>{value}</Text>
+            <View key={label} style={[styles.row, { borderBottomColor: cores.borda }]}>
+              <Text style={[styles.label, { color: cores.textoSecundario }]}>{label}:</Text>
+              <Text style={[styles.value, { color: cores.texto }]}>{value}</Text>
             </View>
           ))}
         </View>
       )}
 
       {/* Botão editar */}
-      <TouchableOpacity style={styles.button} onPress={() => router.push(`/(tabs)/cadastro?id=${paciente.id}`)}>
-        <Text style={styles.buttonText}>✏️ Editar Paciente</Text>
-      </TouchableOpacity>
+      <NeonButton titulo="✏️ Editar Paciente" onPress={() => router.push(`/(tabs)/cadastro?id=${paciente.id}`)} fullWidth />
     </>
   );
 
   const renderVisitas = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>📊 Histórico de Visitas</Text>
+    <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+      <Text style={[styles.sectionTitle, { color: cores.primary }]}>📊 Histórico de Visitas</Text>
       {visitas.length === 0 ? (
-        <Text style={styles.obs}>Nenhuma visita registrada ainda.</Text>
+        <Text style={[styles.obs, { color: cores.texto }]}>Nenhuma visita registrada ainda.</Text>
       ) : (
         visitas.map(v => (
-          <View key={v.id} style={styles.visitaCard}>
-            <Text style={styles.visitaData}>📅 {v.data}</Text>
-            {v.pressaoSistolica && <Text style={styles.visitaItem}>🫀 PA: {v.pressaoSistolica}/{v.pressaoDiastolica} mmHg</Text>}
-            {v.glicemia && <Text style={styles.visitaItem}>🩸 Glicemia: {v.glicemia}</Text>}
-            {v.medicamentos && <Text style={styles.visitaItem}>💊 Medicamentos: {v.medicamentos}</Text>}
-            {v.observacoes && <Text style={styles.visitaItemObs}>{v.observacoes}</Text>}
+          <View key={v.id} style={[styles.visitaCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+            <Text style={[styles.visitaData, { color: cores.primary }]}>📅 {v.data}</Text>
+            {v.pressaoSistolica && <Text style={[styles.visitaItem, { color: cores.texto }]}>🫀 PA: {v.pressaoSistolica}/{v.pressaoDiastolica} mmHg</Text>}
+            {v.glicemia && <Text style={[styles.visitaItem, { color: cores.texto }]}>🩸 Glicemia: {v.glicemia}</Text>}
+            {v.medicamentos && <Text style={[styles.visitaItem, { color: cores.texto }]}>💊 Medicamentos: {v.medicamentos}</Text>}
+            {v.observacoes && <Text style={[styles.visitaItemObs, { color: cores.textoSecundario }]}>{v.observacoes}</Text>}
           </View>
         ))
       )}
@@ -301,16 +297,16 @@ export default function DetalhesScreen() {
 
   const renderVisitaForm = () => (
     <ScrollView>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>➕ Registrar Visita</Text>
-        <Text style={styles.visitaData}>📅 {new Date().toLocaleDateString('pt-BR')}</Text>
+      <View style={[styles.section, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+        <Text style={[styles.sectionTitle, { color: cores.primary }]}>➕ Registrar Visita</Text>
+        <Text style={[styles.visitaData, { color: cores.primary }]}>📅 {new Date().toLocaleDateString('pt-BR')}</Text>
 
         <Text style={[styles.label, { color: cores.texto }]}>Pressão arterial</Text>
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
           <TextInput
             style={[styles.input, { flex: 1, backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
             placeholder="Sistólica"
-            placeholderTextColor="#AAA"
+            placeholderTextColor={cores.textoSecundario}
             value={vPressaoS}
             onChangeText={setVPressaoS}
             keyboardType="numeric"
@@ -319,7 +315,7 @@ export default function DetalhesScreen() {
           <TextInput
             style={[styles.input, { flex: 1, backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
             placeholder="Diastólica"
-            placeholderTextColor="#AAA"
+            placeholderTextColor={cores.textoSecundario}
             value={vPressaoD}
             onChangeText={setVPressaoD}
             keyboardType="numeric"
@@ -331,7 +327,7 @@ export default function DetalhesScreen() {
         <TextInput
           style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
           placeholder="Ex: 95"
-          placeholderTextColor="#AAA"
+          placeholderTextColor={cores.textoSecundario}
           value={vGlicemia}
           onChangeText={setVGlicemia}
           keyboardType="numeric"
@@ -341,7 +337,7 @@ export default function DetalhesScreen() {
         <TextInput
           style={[styles.input, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
           placeholder="Ex: Captopril 25mg, Metformina 850mg"
-          placeholderTextColor="#AAA"
+          placeholderTextColor={cores.textoSecundario}
           value={vMedicamentos}
           onChangeText={setVMedicamentos}
         />
@@ -350,20 +346,18 @@ export default function DetalhesScreen() {
         <TextInput
           style={[styles.input, styles.observacoes, { backgroundColor: cores.input, color: cores.texto, borderColor: cores.borda }]}
           placeholder="Anotações sobre o estado do paciente..."
-          placeholderTextColor="#AAA"
+          placeholderTextColor={cores.textoSecundario}
           value={vObs}
           onChangeText={setVObs}
           multiline
           textAlignVertical="top"
         />
 
-        <TouchableOpacity
-          style={[styles.button, salvandoVisita && styles.buttonDisabled]}
+        <NeonButton
+          titulo={salvandoVisita ? 'Salvando...' : '✅ Finalizar Visita'}
           onPress={handleSalvarVisita}
-          disabled={salvandoVisita}
-        >
-          <Text style={styles.buttonText}>{salvandoVisita ? 'Salvando...' : '✅ Finalizar Visita'}</Text>
-        </TouchableOpacity>
+          fullWidth
+        />
       </View>
     </ScrollView>
   );
@@ -372,8 +366,8 @@ export default function DetalhesScreen() {
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
       <View style={styles.header}>
         {renderFoto()}
-        <Text style={styles.nome}>{paciente.nome}</Text>
-        {(paciente.microareaProntuario || paciente.microarea) && <Text style={styles.microarea}>📍 {paciente.microareaProntuario || paciente.microarea}</Text>}
+        <Text style={[styles.nome, { color: cores.texto }]}>{paciente.nome}</Text>
+        {(paciente.microareaProntuario || paciente.microarea) && <Text style={[styles.microarea, { color: cores.primary }]}>📍 {paciente.microareaProntuario || paciente.microarea}</Text>}
       </View>
 
       {renderAbas()}
@@ -390,39 +384,38 @@ export default function DetalhesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  notFound: { fontSize: 18, color: '#999', textAlign: 'center', marginBottom: 20 },
+  notFound: { fontSize: 18, textAlign: 'center', marginBottom: 20 },
   header: { padding: 20, alignItems: 'center', marginBottom: 5 },
-  fotoDetalhe: { width: 80, height: 80, borderRadius: 40, marginBottom: 12, borderWidth: 3, borderColor: '#FF8C00' },
-  nome: { fontSize: 24, fontWeight: 'bold', color: '#222', textAlign: 'center' },
-  microarea: { fontSize: 14, color: '#FF8C00', marginTop: 5 },
+  fotoDetalhe: { width: 80, height: 80, borderRadius: 40, marginBottom: 12, borderWidth: 3 },
+  nome: { fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
+  microarea: { fontSize: 14, marginTop: 5 },
   abasRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 15, gap: 6 },
-  abaBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#F0F0F0', alignItems: 'center' },
-  abaAtiva: { backgroundColor: '#FF8C00' },
-  abaText: { fontSize: 13, fontWeight: '600', color: '#666' },
-  abaTextAtiva: { color: '#FFF' },
-  section: { backgroundColor: '#FFF', borderRadius: 12, padding: 16, marginHorizontal: 16, marginBottom: 15, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#FF8C00', marginBottom: 12 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-  label: { fontSize: 14, color: '#666' },
-  value: { fontSize: 14, color: '#333', fontWeight: '500', textAlign: 'right', flex: 1, marginLeft: 10 },
+  abaBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  abaAtiva: {},
+  abaText: { fontSize: 13, fontWeight: '600' },
+  section: { borderRadius: 12, padding: 16, marginHorizontal: 16, marginBottom: 15, borderWidth: 1 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1 },
+  label: { fontSize: 14 },
+  value: { fontSize: 14, fontWeight: '500', textAlign: 'right', flex: 1, marginLeft: 10 },
   condRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
-  condLabel: { fontSize: 15, color: '#444' },
+  condLabel: { fontSize: 15 },
   condValue: { fontSize: 15, fontWeight: '600' },
-  sim: { color: '#2E7D32' },
-  nao: { color: '#999' },
-  obs: { fontSize: 14, color: '#555', lineHeight: 22 },
-  button: { backgroundColor: '#FF8C00', height: 48, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
-  buttonSmall: { backgroundColor: '#8E24AA', height: 44, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  sim: {},
+  nao: {},
+  obs: { fontSize: 14, lineHeight: 22 },
+  button: { backgroundColor: '#00E676', height: 48, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
+  buttonSmall: { backgroundColor: '#00B0FF', height: 44, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#0B1220', fontSize: 16, fontWeight: 'bold' },
   input: { height: 48, borderWidth: 1, borderRadius: 8, marginBottom: 12, paddingHorizontal: 14, fontSize: 16 },
   observacoes: { height: 100, paddingTop: 12 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 8, marginBottom: 10, borderWidth: 1 },
   switchLabel: { fontSize: 16 },
   optionsRow: { flexDirection: 'row', gap: 8, marginBottom: 15, flexWrap: 'wrap' },
   optionChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1 },
-  visitaCard: { backgroundColor: '#F9F9F9', borderRadius: 8, padding: 12, marginBottom: 8 },
-  visitaData: { fontSize: 14, fontWeight: 'bold', color: '#FF8C00', marginBottom: 4 },
-  visitaItem: { fontSize: 14, color: '#444', marginBottom: 2 },
-  visitaItemObs: { fontSize: 13, color: '#666', fontStyle: 'italic', marginTop: 4 },
+  visitaCard: { borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1 },
+  visitaData: { fontSize: 14, fontWeight: 'bold', marginBottom: 4 },
+  visitaItem: { fontSize: 14, marginBottom: 2 },
+  visitaItemObs: { fontSize: 13, fontStyle: 'italic', marginTop: 4 },
 });

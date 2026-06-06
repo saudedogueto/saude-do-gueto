@@ -1,5 +1,7 @@
 /**
  * AlertCard.tsx — Card de alerta do Agente
+ *
+ * Design futurista com indicadores neon.
  */
 
 import React from 'react';
@@ -18,14 +20,14 @@ const ICONES: Record<string, string> = {
 };
 
 const CORES: Record<string, string> = {
-  vermelho: '#e74c3c',
-  laranja: '#e67e22',
-  amarelo: '#f1c40f',
-  verde: '#2ecc71',
+  vermelho: '#FF6B6B',
+  laranja: '#FFA726',
+  amarelo: '#FFD54F',
+  verde: '#00E676',
 };
 
 export function AlertCard({ alerta }: Props) {
-  const cor = CORES[alerta.nivel] || '#666';
+  const cor = CORES[alerta.nivel] || 'rgba(255,255,255,0.4)';
 
   return (
     <View style={[styles.card, { borderLeftColor: cor }]}>
@@ -45,13 +47,13 @@ export function AlertCard({ alerta }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 12,
     padding: 14,
     marginVertical: 4,
-    borderLeftWidth: 4,
-    borderColor: '#333',
+    borderLeftWidth: 3,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   header: {
     flexDirection: 'row',
@@ -59,21 +61,21 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   icone: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 8,
   },
   nivel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   mensagem: {
-    color: '#e0e0e0',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 20,
   },
   base: {
-    color: '#888',
+    color: 'rgba(255, 255, 255, 0.35)',
     fontSize: 11,
     marginTop: 6,
     fontStyle: 'italic',

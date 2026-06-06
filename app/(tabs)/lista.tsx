@@ -55,30 +55,43 @@ export default function ListaScreen() {
     >
       <View style={styles.cardRow}>
         {item.foto ? (
-          <Image source={{ uri: item.foto }} style={styles.fotoCard} />
+          <Image source={{ uri: item.foto }} style={[styles.fotoCard, { borderColor: cores.primary }]} />
         ) : (
-          <View style={styles.fotoCardPlaceholder}>
+          <View style={[styles.fotoCardPlaceholder, { backgroundColor: cores.card, borderColor: cores.borda }]}>
             <Text style={styles.fotoCardEmoji}>👤</Text>
           </View>
         )}
         <View style={styles.cardInfo}>
-          <Text style={styles.nome}>{item.nome}</Text>
-          <Text style={styles.sus}>CPF: {item.cpf || '---'}</Text>
+          <Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
+          <Text style={[styles.sus, { color: cores.textoSecundario }]}>CPF: {item.cpf || '---'}</Text>
         </View>
       </View>
 
       <View style={styles.tags}>
-        {item.hipertensao && <Text style={[styles.tag, { backgroundColor: '#FFF3E0', color: '#E65100' }]}>HAS</Text>}
-        {item.diabetes && <Text style={[styles.tag, { backgroundColor: '#E8F5E9', color: '#2E7D32' }]}>DM</Text>}
-        {item.gestante && <Text style={[styles.tag, { backgroundColor: '#FCE4EC', color: '#C62828' }]}>GEST</Text>}
-        {item.menorDoisAnos && <Text style={[styles.tag, { backgroundColor: '#FFF8E1', color: '#F57F17' }]}>{'👶 <2A'}</Text>}
+        {item.hipertensao && <Text style={[styles.tag, { backgroundColor: 'rgba(0,230,118,0.15)', color: '#00E676' }]}>HAS</Text>}
+        {item.diabetes && <Text style={[styles.tag, { backgroundColor: 'rgba(0,176,255,0.15)', color: '#00B0FF' }]}>DM</Text>}
+        {item.gestante && <Text style={[styles.tag, { backgroundColor: 'rgba(255,255,255,0.06)', color: '#FF5252' }]}>GEST</Text>}
+        {item.menorDoisAnos && <Text style={[styles.tag, { backgroundColor: 'rgba(255,193,7,0.15)', color: '#FFD740' }]}>{'👶 <2A'}</Text>}
       </View>
 
-      {item.telefone ? <Text style={styles.info}>📞 {item.telefone}</Text> : null}
-      {item.endereco ? <Text style={styles.info}>🏠 {item.endereco}</Text> : null}
-      {(item.microareaProntuario || item.microarea) ? <Text style={styles.info}>📍 {item.microareaProntuario || item.microarea}</Text> : null}
+      {item.telefone ? <Text style={[styles.info, { color: cores.textoSecundario }]}>📞 {item.telefone}</Text> : null}
+      {item.endereco ? <Text style={[styles.info, { color: cores.textoSecundario }]}>🏠 {item.endereco}</Text> : null}
+      {(item.microareaProntuario || item.microarea) ? <Text style={[styles.info, { color: cores.textoSecundario }]}>📍 {item.microareaProntuario || item.microarea}</Text> : null}
     </TouchableOpacity>
   );
+
+  const getFiltroBtnStyle = (key: string) => [
+    styles.filtroBtn,
+    {
+      backgroundColor: filtro === key ? cores.primary : cores.card,
+      borderColor: filtro === key ? cores.primary : cores.borda,
+    },
+  ];
+
+  const getFiltroTextStyle = (key: string) => [
+    styles.filtroText,
+    { color: filtro === key ? '#FFFFFF' : cores.textoSecundario },
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: cores.fundo }]}>
@@ -93,10 +106,10 @@ export default function ListaScreen() {
         ].map(f => (
           <TouchableOpacity
             key={f.key}
-            style={[styles.filtroBtn, filtro === f.key && styles.filtroAtivo]}
+            style={getFiltroBtnStyle(f.key)}
             onPress={() => setFiltro(f.key as FiltroCondicao)}
           >
-            <Text style={[styles.filtroText, filtro === f.key && styles.filtroTextAtivo]}>
+            <Text style={getFiltroTextStyle(f.key)}>
               {f.label}
             </Text>
           </TouchableOpacity>
@@ -104,8 +117,9 @@ export default function ListaScreen() {
       </View>
 
       <TextInput
-        style={styles.search}
+        style={[styles.search, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
         placeholder="🔍 Buscar por nome, CPF, SUS ou telefone..."
+        placeholderTextColor={cores.textoSecundario}
         value={busca}
         onChangeText={setBusca}
       />
@@ -113,14 +127,14 @@ export default function ListaScreen() {
       {resultados.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: cores.textoSecundario }]}>
             {busca ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
           </Text>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, { backgroundColor: cores.primary }]}
             onPress={() => router.push('/(tabs)/cadastro')}
           >
-            <Text style={styles.buttonText}>+ Cadastrar</Text>
+            <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>+ Cadastrar</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -156,14 +170,11 @@ export default function ListaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     padding: 15,
   },
   search: {
     height: 48,
-    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 10,
     paddingHorizontal: 16,
     fontSize: 15,
@@ -179,7 +190,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   cardHeader: {
@@ -196,18 +207,15 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginRight: 12,
     borderWidth: 2,
-    borderColor: '#FF8C00',
   },
   fotoCardPlaceholder: {
     width: 44,
     height: 44,
     borderRadius: 22,
     marginRight: 12,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E0E0E0',
   },
   fotoCardEmoji: {
     fontSize: 20,
@@ -218,11 +226,9 @@ const styles = StyleSheet.create({
   nome: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: '#222',
   },
   sus: {
     fontSize: 13,
-    color: '#999',
     marginTop: 2,
   },
   tags: {
@@ -240,7 +246,6 @@ const styles = StyleSheet.create({
   },
   info: {
     fontSize: 13,
-    color: '#666',
     marginTop: 2,
   },
   empty: {
@@ -253,19 +258,32 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   emptyText: {
-    color: '#999',
     fontSize: 16,
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#FF8C00',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#FFF',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  filtrosRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filtroBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filtroText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

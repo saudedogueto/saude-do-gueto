@@ -38,7 +38,7 @@ export default function HistoricoVisitasScreen() {
       if (!mapa.has(v.pacienteId)) {
         mapa.set(v.pacienteId, {
           id: v.pacienteId,
-          nome: v.pacienteNome,
+          nome: v.pacienteNome || 'Paciente',
           visitas: [],
         });
       }
@@ -61,7 +61,7 @@ export default function HistoricoVisitasScreen() {
     setExcluirConfirm(visita);
   };
 
-  const formatarMotivo = (motivo: string) => {
+  const formatarMotivo = (motivo: string | undefined) => {
     const map: Record<string, string> = {
       rotina: 'Rotina',
       retorno: 'Retorno',
@@ -69,40 +69,40 @@ export default function HistoricoVisitasScreen() {
       encaminhamento: 'Encaminhamento',
       outro: 'Outro',
     };
-    return map[motivo] || motivo;
+    return map[motivo || ''] || motivo || '';
   };
 
   const renderItem = ({ item }: { item: PacienteComVisitas }) => {
     const expanded = expandido === item.id;
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: cores.card, borderColor: cores.borda }]}>
         <TouchableOpacity
           style={styles.cardHeader}
           onPress={() => setExpandido(expanded ? null : item.id)}
         >
           <View>
-            <Text style={styles.nome}>{item.nome}</Text>
-            <Text style={styles.resumo}>
+            <Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
+            <Text style={[styles.resumo, { color: cores.textoSecundario }]}>
               {item.visitas.length} visita{item.visitas.length !== 1 ? 's' : ''}
               {item.ultimaVisita ? ` • Última: ${item.ultimaVisita.data}` : ''}
             </Text>
           </View>
-          <Text style={styles.seta}>{expanded ? '▲' : '▼'}</Text>
+          <Text style={[styles.seta, { color: cores.primary }]}>{expanded ? '▲' : '▼'}</Text>
         </TouchableOpacity>
 
         {expanded && (
-          <View style={styles.visitasLista}>
+          <View style={[styles.visitasLista, { borderTopColor: cores.borda }]}>
             {item.visitas.map(v => (
               <TouchableOpacity
                 key={v.id}
-                style={styles.visitaItem}
+                style={[styles.visitaItem, { borderBottomColor: cores.borda }]}
                 onLongPress={() => handleExcluir(v)}
               >
                 <View style={styles.visitaHeader}>
-                  <Text style={styles.visitaData}>{v.data}</Text>
-                  <Text style={styles.visitaHora}>{v.hora}</Text>
-                  <View style={[styles.motivoTag, { backgroundColor: '#FFF3E0' }]}>
-                    <Text style={styles.motivoTagText}>
+                  <Text style={[styles.visitaData, { color: cores.texto }]}>{v.data}</Text>
+                  <Text style={[styles.visitaHora, { color: cores.textoSecundario }]}>{v.hora}</Text>
+                  <View style={[styles.motivoTag, { backgroundColor: 'rgba(0, 230, 118, 0.15)' }]}>
+                    <Text style={[styles.motivoTagText, { color: cores.primary }]}>
                       {formatarMotivo(v.motivo)}
                     </Text>
                   </View>
@@ -111,28 +111,28 @@ export default function HistoricoVisitasScreen() {
                 {(v.pressaoSistolica || v.glicemia) && (
                   <View style={styles.sinaisRow}>
                     {v.pressaoSistolica && (
-                      <Text style={styles.sinal}>
+                      <Text style={[styles.sinal, { color: cores.textoSecundario }]}>
                         PA: {v.pressaoSistolica}/{v.pressaoDiastolica || '?'}
                       </Text>
                     )}
                     {v.glicemia && (
-                      <Text style={styles.sinal}>Glic: {v.glicemia}</Text>
+                      <Text style={[styles.sinal, { color: cores.textoSecundario }]}>Glic: {v.glicemia}</Text>
                     )}
                   </View>
                 )}
 
                 {v.vacinaEmDia !== undefined && (
-                  <Text style={styles.vacinaStatus}>
+                  <Text style={[styles.vacinaStatus, { color: cores.textoSecundario }]}>
                     Vacinas: {v.vacinaEmDia ? '✅ Em dia' : '❌ Atrasada'}
                   </Text>
                 )}
 
                 {v.observacoes ? (
-                  <Text style={styles.obs} numberOfLines={2}>{v.observacoes}</Text>
+                  <Text style={[styles.obs, { color: cores.textoSecundario }]} numberOfLines={2}>{v.observacoes}</Text>
                 ) : null}
 
                 {v.proximaVisita ? (
-                  <Text style={styles.proxVisita}>📅 Próx: {v.proximaVisita}</Text>
+                  <Text style={[styles.proxVisita, { color: cores.primary }]}>📅 Próx: {v.proximaVisita}</Text>
                 ) : null}
               </TouchableOpacity>
             ))}
@@ -147,12 +147,12 @@ export default function HistoricoVisitasScreen() {
       {pacientesVisitas.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>🏠</Text>
-          <Text style={styles.emptyText}>Nenhuma visita registrada ainda</Text>
+          <Text style={[styles.emptyText, { color: cores.textoSecundario }]}>Nenhuma visita registrada ainda</Text>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, { backgroundColor: cores.primary }]}
             onPress={() => router.push('/(tabs)/visita')}
           >
-            <Text style={styles.buttonText}>+ Registrar Visita</Text>
+            <Text style={[styles.buttonText, { color: '#0B1220' }]}>+ Registrar Visita</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -188,20 +188,19 @@ export default function HistoricoVisitasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     padding: 15,
   },
   list: {
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#FFF',
     borderRadius: 12,
     marginBottom: 10,
+    borderWidth: 1,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 3,
     overflow: 'hidden',
   },
@@ -214,25 +213,20 @@ const styles = StyleSheet.create({
   nome: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: '#222',
   },
   resumo: {
     fontSize: 13,
-    color: '#999',
     marginTop: 3,
   },
   seta: {
     fontSize: 12,
-    color: '#FF8C00',
   },
   visitasLista: {
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
   },
   visitaItem: {
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   visitaHeader: {
     flexDirection: 'row',
@@ -243,11 +237,9 @@ const styles = StyleSheet.create({
   visitaData: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
   },
   visitaHora: {
     fontSize: 12,
-    color: '#999',
   },
   motivoTag: {
     paddingHorizontal: 8,
@@ -257,7 +249,6 @@ const styles = StyleSheet.create({
   motivoTagText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#E65100',
   },
   sinaisRow: {
     flexDirection: 'row',
@@ -266,22 +257,18 @@ const styles = StyleSheet.create({
   },
   sinal: {
     fontSize: 13,
-    color: '#555',
   },
   vacinaStatus: {
     fontSize: 13,
-    color: '#555',
     marginBottom: 4,
   },
   obs: {
     fontSize: 13,
-    color: '#777',
     fontStyle: 'italic',
     marginTop: 4,
   },
   proxVisita: {
     fontSize: 12,
-    color: '#FF8C00',
     fontWeight: '600',
     marginTop: 4,
   },
@@ -295,18 +282,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   emptyText: {
-    color: '#999',
     fontSize: 16,
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#FF8C00',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#FFF',
     fontWeight: 'bold',
     fontSize: 16,
   },

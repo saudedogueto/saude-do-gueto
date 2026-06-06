@@ -7,6 +7,10 @@ export interface Familia {
   telefone: string;
   membros: string[];
   dataCriacao: string;
+  latitude?: number;
+  longitude?: number;
+  numero?: string;
+  complemento?: string;
 }
 
 export interface Paciente {
@@ -14,10 +18,20 @@ export interface Paciente {
   nome: string;
   dataNascimento?: string;
   cpf?: string;
+  cartaoSUS?: string;
   sus?: string;
-  microarea?: string;
-  endereco?: string;
+  sexo?: string;
+  nomeMae?: string;
   telefone?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  microarea?: string;
+  hipertensao?: boolean;
+  diabetes?: boolean;
+  gestante?: boolean;
+  menorDoisAnos?: boolean;
   responsavel?: string;
   comorbidades?: string;
   observacoes?: string;
@@ -27,9 +41,23 @@ export interface Paciente {
 export interface Visita {
   id: string;
   pacienteId: string;
+  pacienteNome?: string;
+  pacienteCPF?: string;
+  pacienteSUS?: string;
   data: string;
+  hora?: string;
   tipo?: string;
+  motivo?: string;
+  pressaoSistolica?: string;
+  pressaoDiastolica?: string;
+  glicemia?: string;
+  peso?: string;
+  altura?: string;
+  vacinaEmDia?: boolean;
+  medicamentos?: string;
   observacoes?: string;
+  encaminhamento?: string;
+  proximaVisita?: string;
   realizada: boolean;
 }
 

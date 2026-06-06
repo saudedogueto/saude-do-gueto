@@ -20,6 +20,7 @@ import {
   validarTelefone,
   buscarCEP,
 } from '@/src/utils/mascaras';
+import { NeonButton } from '../../src/components/NeonButton';
 
 // ─── Cores dos switches ────────────────────────────────────────────────
 
@@ -513,15 +514,14 @@ export default function CadastroScreen() {
         />
 
         {/* ── Botão ───────────────────────────────────── */}
-        <TouchableOpacity
-          style={[styles.button, salvando && styles.buttonDisabled]}
-          onPress={handleSalvar}
-          disabled={salvando}
-        >
-          <Text style={styles.buttonText}>
-            {salvando ? 'Salvando...' : editando ? 'Atualizar Paciente' : 'Cadastrar Paciente'}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ marginTop: 20 }}>
+          <NeonButton
+            titulo={salvando ? 'Salvando...' : editando ? 'Atualizar Paciente' : 'Cadastrar Paciente'}
+            onPress={handleSalvar}
+            cor="#FFFFFF"
+            fullWidth
+          />
+        </View>
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -534,21 +534,21 @@ export default function CadastroScreen() {
 const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 40 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 5, marginTop: 5 },
-  input: { height: 48, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, marginBottom: 15, paddingHorizontal: 14, fontSize: 16 },
-  inputRequired: { borderLeftWidth: 3, borderLeftColor: '#FF8C00' },
+  input: { height: 48, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, marginBottom: 15, paddingHorizontal: 14, fontSize: 16 },
+  inputRequired: { borderLeftWidth: 3, borderLeftColor: '#00E676' },
   observacoes: { height: 100, paddingTop: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 10, color: '#FF8C00' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', padding: 14, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#E0E0E0' },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 10, color: '#00E676' },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.06)', padding: 14, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   switchLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   switchBullet: { width: 12, height: 12, borderRadius: 6 },
   switchLabel: { fontSize: 16 },
-  button: { backgroundColor: '#FF8C00', height: 50, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 20, elevation: 3, shadowColor: '#FF8C00', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  button: { backgroundColor: '#00E676', height: 50, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 20, elevation: 3, shadowColor: '#00E676', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
   cepRow: { flexDirection: 'row', alignItems: 'center' },
   fotoContainer: { alignSelf: 'center', marginBottom: 20 },
-  foto: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#FF8C00' },
-  fotoPlaceholder: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center' },
+  foto: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#00E676' },
+  fotoPlaceholder: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
   subCampos: { paddingLeft: 16, borderLeftWidth: 3, borderLeftColor: '#D81B60', marginBottom: 10 },
   optionsRow: { flexDirection: 'row', gap: 8, marginBottom: 15, flexWrap: 'wrap' },
   optionChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1 },

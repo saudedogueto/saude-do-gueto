@@ -110,7 +110,7 @@ export async function syncParaFirestore(colecao: string, dados: any[]) {
       if (!item.id) continue;
       
       const ref = doc(dbInstance, colecao, item.id);
-      const dadosLimpos = { ...item };
+      const dadosLimpos: Record<string, any> = { ...item };
       
       // Converte datas string pra Timestamp
       if (dadosLimpos.dataCriacao) dadosLimpos.dataCriacao = paraFirestoreDate(dadosLimpos.dataCriacao);
@@ -142,7 +142,7 @@ export async function syncDoFirestore(colecao: string): Promise<any[]> {
     
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      const item = { id: docSnap.id, ...data };
+      const item: Record<string, any> = { id: docSnap.id, ...data };
       
       // Converte Timestamps de volta pra string
       if (item.dataCriacao) item.dataCriacao = deFirestoreDate(item.dataCriacao);

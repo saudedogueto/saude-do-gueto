@@ -5,9 +5,12 @@ import {
 } from 'react-native';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { router } from 'expo-router';
+import { useTema } from '@/src/contexts/TemaContext';
+import { NeonButton } from '../../src/components/NeonButton';
 
 export default function LoginScreen() {
-  const { login, temSenha, definirSenha } = useAuth();
+  const { cores } = useTema();
+  const { loginLocal, temSenha, definirSenha } = useAuth();
   const [senha, setSenha] = useState('');
   const [confirmaSenha, setConfirmaSenha] = useState('');
   const [modoDefinir, setModoDefinir] = useState(false);
@@ -19,12 +22,11 @@ export default function LoginScreen() {
     }
 
     if (!temSenha) {
-      // Primeiro acesso - definir senha
       setModoDefinir(true);
       return;
     }
 
-    const ok = await login(senha);
+    const ok = await loginLocal(senha);
     if (ok) {
       router.replace('/(tabs)/dashboard');
     } else {
@@ -47,41 +49,44 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: cores.fundo }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <Text style={styles.logo}>🏥</Text>
-        <Text style={styles.title}>Saúde do Gueto</Text>
-        <Text style={styles.subtitle}>Agente Comunitário de Saúde</Text>
-        <Text style={styles.desc}>Ferramenta de acompanhamento de pacientes da comunidade</Text>
+        <Text style={[styles.title, { color: cores.primary }]}>Saúde do Gueto</Text>
+        <Text style={[styles.subtitle, { color: cores.textoSecundario }]}>Agente Comunitário de Saúde</Text>
+        <Text style={[styles.desc, { color: cores.textoSecundario }]}>Ferramenta de acompanhamento de pacientes da comunidade</Text>
 
         <View style={styles.form}>
           {!modoDefinir ? (
             <>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: cores.borda, color: cores.texto }]}
                 placeholder="Digite sua senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
                 keyboardType="numeric"
                 maxLength={6}
               />
-              <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>
-                  {temSenha ? 'Acessar' : 'Primeiro Acesso'}
-                </Text>
-              </TouchableOpacity>
+              <NeonButton
+                titulo={temSenha ? 'Acessar' : 'Primeiro Acesso'}
+                onPress={handleLogin}
+                cor="#FFFFFF"
+                fullWidth
+              />
             </>
           ) : (
             <>
-              <Text style={styles.instructions}>
+              <Text style={[styles.instructions, { color: cores.textoSecundario }]}>
                 Defina uma senha numérica de 4 a 6 dígitos
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: cores.borda, color: cores.texto }]}
                 placeholder="Nova senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
@@ -89,23 +94,27 @@ export default function LoginScreen() {
                 maxLength={6}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.input, borderColor: cores.borda, color: cores.texto }]}
                 placeholder="Confirme a senha"
+                placeholderTextColor={cores.textoSecundario}
                 value={confirmaSenha}
                 onChangeText={setConfirmaSenha}
                 secureTextEntry
                 keyboardType="numeric"
                 maxLength={6}
               />
-              <TouchableOpacity style={styles.button} onPress={handleDefinirSenha}>
-                <Text style={styles.buttonText}>Definir Senha</Text>
-              </TouchableOpacity>
+              <NeonButton
+                titulo="Definir Senha"
+                onPress={handleDefinirSenha}
+                cor="#FFFFFF"
+                fullWidth
+              />
             </>
           )}
         </View>
 
         {!temSenha && (
-          <Text style={styles.aviso}>
+          <Text style={[styles.aviso, { color: cores.textoSecundario }]}>
             🔒 Primeiro acesso: defina uma senha para proteger os dados dos pacientes
           </Text>
         )}
@@ -117,7 +126,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
   content: {
     flex: 1,
@@ -132,17 +140,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF8C00',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 5,
   },
   desc: {
     fontSize: 13,
-    color: '#999',
     textAlign: 'center',
     marginBottom: 30,
   },
@@ -152,9 +157,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 52,
-    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#FFA500',
     borderRadius: 10,
     marginBottom: 15,
     paddingHorizontal: 16,
@@ -162,31 +165,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 4,
   },
-  button: {
-    backgroundColor: '#FF8C00',
-    height: 52,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   instructions: {
-    color: '#666',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 20,
   },
   aviso: {
-    color: '#999',
     fontSize: 12,
     textAlign: 'center',
     marginTop: 30,

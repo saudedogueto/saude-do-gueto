@@ -1,13 +1,14 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, Platform
+  View, Text, TextInput, TouchableOpacity,
+  ScrollView
 } from 'react-native';
 import { adicionarLembrete } from '@/src/utils/lembretes';
 import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useVisitas } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { useToast } from '@/src/components/Toast';
+import { NeonButton } from '../../src/components/NeonButton';
 import { router } from 'expo-router';
 
 const MOTIVOS = [
@@ -55,7 +56,7 @@ export default function VisitaScreen() {
     setBusca('');
   };
 
-  const handleSalvar = async () => {
+  const handleSalvarVisita = async () => {
     if (!pacienteId) {
       showToast('Selecione um paciente', 'warning');
       return;
@@ -76,6 +77,7 @@ export default function VisitaScreen() {
         vacinaEmDia: vacinaEmDia ?? undefined,
         observacoes,
         proximaVisita,
+        realizada: true,
       });
       // Se agendou próxima visita, cria lembrete
       if (proximaVisita.trim()) {
@@ -93,64 +95,131 @@ export default function VisitaScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: cores.fundo }]}>
-      <Text style={styles.title}>🏠 Registrar Visita</Text>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20, paddingBottom: 40, backgroundColor: cores.fundo }}>
+      <Text style={{ fontSize: 22, fontWeight: 'bold', color: cores.primary, marginBottom: 25, textAlign: 'center' }}>
+        🏠 Registrar Visita
+      </Text>
 
       {/* Seletor de Paciente */}
-      <Text style={styles.label}>Paciente *</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Paciente *
+      </Text>
       <TouchableOpacity
-        style={styles.seletorPaciente}
+        style={{
+          height: 48,
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.primary,
+          borderRadius: 8,
+          paddingHorizontal: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 5,
+        }}
         onPress={() => setMostrarPacientes(!mostrarPacientes)}
       >
-        <Text style={pacienteId ? styles.pacienteNome : styles.placeholder}>
+        <Text style={{ fontSize: 16, color: pacienteId ? cores.texto : cores.textoSecundario }}>
           {pacienteId ? pacienteNome : 'Selecione um paciente...'}
         </Text>
-        <Text style={styles.seta}>{mostrarPacientes ? '▲' : '▼'}</Text>
+        <Text style={{ fontSize: 12, color: cores.primary }}>{mostrarPacientes ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
       {mostrarPacientes && (
-        <View style={styles.listaPacientes}>
+        <View style={{
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.borda,
+          borderRadius: 8,
+          marginBottom: 15,
+          maxHeight: 200,
+          padding: 10,
+        }}>
           <TextInput
-            style={styles.buscaInput}
+            style={{
+              height: 40,
+              backgroundColor: cores.card,
+              borderRadius: 6,
+              paddingHorizontal: 12,
+              fontSize: 14,
+              marginBottom: 8,
+              color: cores.texto,
+              borderWidth: 1,
+              borderColor: cores.borda,
+            }}
             placeholder="Buscar paciente..."
+            placeholderTextColor={cores.textoSecundario}
             value={busca}
             onChangeText={setBusca}
           />
           {pacientesFiltrados.map(p => (
             <TouchableOpacity
               key={p.id}
-              style={styles.itemPaciente}
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 8,
+                borderBottomWidth: 1,
+                borderBottomColor: cores.borda,
+              }}
               onPress={() => selecionarPaciente(p.id, p.nome)}
             >
-              <Text style={styles.itemNome}>{p.nome}</Text>
-              {p.microarea && <Text style={styles.itemMicro}>{p.microarea}</Text>}
+              <Text style={{ fontSize: 15, color: cores.texto, fontWeight: '500' }}>{p.nome}</Text>
+              {p.microarea && <Text style={{ fontSize: 12, color: cores.primary, marginTop: 2 }}>{p.microarea}</Text>}
             </TouchableOpacity>
           ))}
           {pacientesFiltrados.length === 0 && (
-            <Text style={styles.semResultados}>Nenhum paciente encontrado</Text>
+            <Text style={{ textAlign: 'center', color: cores.textoSecundario, padding: 10 }}>
+              Nenhum paciente encontrado
+            </Text>
           )}
         </View>
       )}
 
       {/* Data */}
-      <Text style={styles.label}>Data da Visita</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Data da Visita
+      </Text>
       <TextInput
-        style={styles.input}
+        style={{
+          height: 48,
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.borda,
+          borderRadius: 8,
+          marginBottom: 15,
+          paddingHorizontal: 14,
+          fontSize: 16,
+          color: cores.texto,
+        }}
         placeholder="DD/MM/AAAA"
+        placeholderTextColor={cores.textoSecundario}
         value={data}
         onChangeText={setData}
       />
 
       {/* Motivo */}
-      <Text style={styles.label}>Motivo da Visita</Text>
-      <View style={styles.motivosGrid}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Motivo da Visita
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 }}>
         {MOTIVOS.map(m => (
           <TouchableOpacity
             key={m.key}
-            style={[styles.motivoBtn, motivo === m.key && styles.motivoAtivo]}
+            style={{
+              backgroundColor: motivo === m.key ? cores.primary : cores.card,
+              borderWidth: 1,
+              borderColor: motivo === m.key ? cores.primary : cores.borda,
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 14,
+            }}
             onPress={() => setMotivo(m.key)}
           >
-            <Text style={[styles.motivoText, motivo === m.key && styles.motivoTextAtivo]}>
+            <Text style={{
+              fontSize: 13,
+              color: motivo === m.key ? '#FFF' : cores.textoSecundario,
+              fontWeight: motivo === m.key ? '600' : '400',
+            }}>
               {m.label}
             </Text>
           </TouchableOpacity>
@@ -158,24 +227,52 @@ export default function VisitaScreen() {
       </View>
 
       {/* Sinais Vitais */}
-      <Text style={styles.sectionTitle}>🩺 Sinais Vitais</Text>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: cores.primary, marginTop: 10, marginBottom: 10 }}>
+        🩺 Sinais Vitais
+      </Text>
 
-      <View style={styles.pressaoRow}>
-        <View style={styles.pressaoItem}>
-          <Text style={styles.label}>Pressão Sistólica</Text>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+            Pressão Sistólica
+          </Text>
           <TextInput
-            style={styles.input}
+            style={{
+              height: 48,
+              backgroundColor: cores.card,
+              borderWidth: 1,
+              borderColor: cores.borda,
+              borderRadius: 8,
+              marginBottom: 15,
+              paddingHorizontal: 14,
+              fontSize: 16,
+              color: cores.texto,
+            }}
             placeholder="120"
+            placeholderTextColor={cores.textoSecundario}
             value={pressaoSist}
             onChangeText={setPressaoSist}
             keyboardType="numeric"
           />
         </View>
-        <View style={styles.pressaoItem}>
-          <Text style={styles.label}>Pressão Diastólica</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+            Pressão Diastólica
+          </Text>
           <TextInput
-            style={styles.input}
+            style={{
+              height: 48,
+              backgroundColor: cores.card,
+              borderWidth: 1,
+              borderColor: cores.borda,
+              borderRadius: 8,
+              marginBottom: 15,
+              paddingHorizontal: 14,
+              fontSize: 16,
+              color: cores.texto,
+            }}
             placeholder="80"
+            placeholderTextColor={cores.textoSecundario}
             value={pressaoDiast}
             onChangeText={setPressaoDiast}
             keyboardType="numeric"
@@ -183,37 +280,96 @@ export default function VisitaScreen() {
         </View>
       </View>
 
-      <Text style={styles.label}>Glicemia (mg/dL)</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Glicemia (mg/dL)
+      </Text>
       <TextInput
-        style={styles.input}
+        style={{
+          height: 48,
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.borda,
+          borderRadius: 8,
+          marginBottom: 15,
+          paddingHorizontal: 14,
+          fontSize: 16,
+          color: cores.texto,
+        }}
         placeholder="Ex: 100"
+        placeholderTextColor={cores.textoSecundario}
         value={glicemia}
         onChangeText={setGlicemia}
         keyboardType="numeric"
       />
 
       {/* Vacina */}
-      <Text style={styles.label}>Vacinas em dia?</Text>
-      <View style={styles.vacinaRow}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Vacinas em dia?
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 15 }}>
         <TouchableOpacity
-          style={[styles.vacinaBtn, vacinaEmDia === true && styles.vacinaOk]}
+          style={{
+            flex: 1,
+            height: 44,
+            backgroundColor: vacinaEmDia === true ? cores.primary : cores.card,
+            borderWidth: 1,
+            borderColor: vacinaEmDia === true ? cores.primary : cores.borda,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
           onPress={() => setVacinaEmDia(true)}
         >
-          <Text style={[styles.vacinaText, vacinaEmDia === true && styles.vacinaTextOk]}>✅ Sim</Text>
+          <Text style={{
+            fontSize: 14,
+            color: vacinaEmDia === true ? '#FFF' : cores.textoSecundario,
+            fontWeight: vacinaEmDia === true ? '600' : '400',
+          }}>
+            ✅ Sim
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.vacinaBtn, vacinaEmDia === false && styles.vacinaNok]}
+          style={{
+            flex: 1,
+            height: 44,
+            backgroundColor: vacinaEmDia === false ? 'rgba(198,40,40,0.15)' : cores.card,
+            borderWidth: 1,
+            borderColor: vacinaEmDia === false ? '#EF5350' : cores.borda,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
           onPress={() => setVacinaEmDia(false)}
         >
-          <Text style={[styles.vacinaText, vacinaEmDia === false && styles.vacinaTextNok]}>❌ Não</Text>
+          <Text style={{
+            fontSize: 14,
+            color: vacinaEmDia === false ? '#EF5350' : cores.textoSecundario,
+            fontWeight: vacinaEmDia === false ? '600' : '400',
+          }}>
+            ❌ Não
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Observações */}
-      <Text style={styles.label}>Observações</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Observações
+      </Text>
       <TextInput
-        style={[styles.input, styles.obsInput]}
+        style={{
+          height: 100,
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.borda,
+          borderRadius: 8,
+          marginBottom: 15,
+          paddingHorizontal: 14,
+          fontSize: 16,
+          color: cores.texto,
+          paddingTop: 12,
+        }}
         placeholder="Anotações da visita..."
+        placeholderTextColor={cores.textoSecundario}
         value={observacoes}
         onChangeText={setObservacoes}
         multiline
@@ -221,218 +377,28 @@ export default function VisitaScreen() {
       />
 
       {/* Próxima Visita */}
-      <Text style={styles.label}>Próxima Visita</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: cores.textoSecundario, marginBottom: 5, marginTop: 5 }}>
+        Próxima Visita
+      </Text>
       <TextInput
-        style={styles.input}
+        style={{
+          height: 48,
+          backgroundColor: cores.card,
+          borderWidth: 1,
+          borderColor: cores.borda,
+          borderRadius: 8,
+          marginBottom: 15,
+          paddingHorizontal: 14,
+          fontSize: 16,
+          color: cores.texto,
+        }}
         placeholder="DD/MM/AAAA"
+        placeholderTextColor={cores.textoSecundario}
         value={proximaVisita}
         onChangeText={setProximaVisita}
       />
 
-      <TouchableOpacity
-        style={[styles.button, salvando && styles.buttonDisabled]}
-        onPress={handleSalvar}
-        disabled={salvando}
-      >
-        <Text style={styles.buttonText}>
-          {salvando ? 'Salvando...' : '✅ Registrar Visita'}
-        </Text>
-      </TouchableOpacity>
+      <NeonButton titulo={salvando ? 'Salvando...' : 'Finalizar Visita'} onPress={handleSalvarVisita} cor="#FFFFFF" fullWidth />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#FAFAFA',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FF8C00',
-    marginBottom: 25,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#555',
-    marginBottom: 5,
-    marginTop: 5,
-  },
-  input: {
-    height: 48,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 14,
-    fontSize: 16,
-  },
-  seletorPaciente: {
-    height: 48,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#FF8C00',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  pacienteNome: {
-    fontSize: 16,
-    color: '#333',
-  },
-  placeholder: {
-    fontSize: 16,
-    color: '#BBB',
-  },
-  seta: {
-    fontSize: 12,
-    color: '#FF8C00',
-  },
-  listaPacientes: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    marginBottom: 15,
-    maxHeight: 200,
-    padding: 10,
-  },
-  buscaInput: {
-    height: 40,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  itemPaciente: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  itemNome: {
-    fontSize: 15,
-    color: '#333',
-    fontWeight: '500',
-  },
-  itemMicro: {
-    fontSize: 12,
-    color: '#FF8C00',
-    marginTop: 2,
-  },
-  semResultados: {
-    textAlign: 'center',
-    color: '#999',
-    padding: 10,
-  },
-  motivosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 15,
-  },
-  motivoBtn: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
-  motivoAtivo: {
-    backgroundColor: '#FF8C00',
-    borderColor: '#FF8C00',
-  },
-  motivoText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  motivoTextAtivo: {
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF8C00',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  pressaoRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  pressaoItem: {
-    flex: 1,
-  },
-  vacinaRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 15,
-  },
-  vacinaBtn: {
-    flex: 1,
-    height: 44,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  vacinaOk: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#2E7D32',
-  },
-  vacinaNok: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#C62828',
-  },
-  vacinaText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  vacinaTextOk: {
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-  vacinaTextNok: {
-    color: '#C62828',
-    fontWeight: '600',
-  },
-  obsInput: {
-    height: 100,
-    paddingTop: 12,
-  },
-  button: {
-    backgroundColor: '#FF8C00',
-    height: 50,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    elevation: 3,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 17,
-    fontWeight: 'bold',
-  },
-});

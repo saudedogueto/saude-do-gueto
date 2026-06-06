@@ -1,5 +1,7 @@
 /**
  * ChatBubble.tsx — Bolha de mensagem do chat do Agente
+ *
+ * Design futurista: fundo escuro, bordas sutis, cores neon.
  */
 
 import React from 'react';
@@ -63,22 +65,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   bubble: {
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 0,
+    padding: 14,
+    borderRadius: 18,
   },
   agenteBubble: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
     borderBottomLeftRadius: 4,
-    borderColor: '#333',
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   usuarioBubble: {
-    backgroundColor: '#e67e22',
+    backgroundColor: '#00E676',
     borderBottomRightRadius: 4,
   },
   carregandoBubble: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     opacity: 0.7,
   },
   texto: {
@@ -86,14 +87,15 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   agenteTexto: {
-    color: '#e0e0e0',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   usuarioTexto: {
-    color: '#fff',
+    color: '#0B1220',
+    fontWeight: '500',
   },
   horario: {
     fontSize: 11,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.3)',
     marginTop: 2,
     marginHorizontal: 4,
   },
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   carregandoTexto: {
-    color: '#e67e22',
+    color: '#00E676',
     fontStyle: 'italic',
     fontSize: 14,
   },

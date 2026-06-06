@@ -8,7 +8,8 @@ import { useFamilias, Familia } from '@/src/contexts/FamiliaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { useToast } from '@/src/components/Toast';
 import { ConfirmDialog } from '@/src/components/ConfirmDialog';
-import SeletorMapa from '@/src/components/SeletorMapa';
+import SeletorMapaLeaflet from '@/src/components/SeletorMapaLeaflet';
+import { NeonButton } from '@/src/components/NeonButton';
 import { router } from 'expo-router';
 
 export default function FamiliasScreen() {
@@ -180,22 +181,21 @@ export default function FamiliasScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
-      <Text style={styles.title}>👨‍👩‍👧‍👦 Famílias</Text>
-      <Text style={styles.subtitle}>
+      <Text style={[styles.title, { color: cores.primary }]}>👨‍👩‍👧‍👦 Famílias</Text>
+      <Text style={[styles.subtitle, { color: cores.textoSecundario }]}>
         {familias.length} família(s) • {pacientesEmFamilias.size} paciente(s) vinculados
       </Text>
 
       {/* ─── BOTÃO CRIAR / FORMULÁRIO ───────────────── */}
       {!mostrarForm ? (
-        <TouchableOpacity
-          style={styles.btnCriar}
+        <NeonButton
+          titulo="+ Nova Família"
+          cor="#FFFFFF"
           onPress={() => { resetForm(); setMostrarForm(true); }}
-        >
-          <Text style={styles.btnCriarText}>+ Nova Família</Text>
-        </TouchableOpacity>
+        />
       ) : (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>
+        <View style={[styles.formCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+          <Text style={[styles.formTitle, { color: cores.texto }]}>
             {editandoFamiliaId ? '✏️ Editar Família' : 'Nova Família'}
           </Text>
 
@@ -203,35 +203,36 @@ export default function FamiliasScreen() {
           {!editandoFamiliaId && (
             <View style={styles.autocompleteWrapper}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
                 placeholder="Nome do responsável *"
+                placeholderTextColor={cores.textoSecundario}
                 value={nomeResp}
                 onChangeText={handleNomeRespChange}
               />
               {sugestoesResp.length > 0 && (
-                <View style={styles.sugestoesBox}>
+                <View style={[styles.sugestoesBox, { backgroundColor: cores.card, borderColor: cores.borda }]}>
                   {sugestoesResp.map(p => (
                     <TouchableOpacity
                       key={p.id}
-                      style={styles.sugestaoItem}
+                      style={[styles.sugestaoItem, { borderBottomColor: cores.card }]}
                       onPress={() => selecionarResponsavel(p)}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         {p.foto ? (
                           <Image source={{ uri: p.foto }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
                         ) : (
-                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: cores.card, justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
                             <Text style={{ fontSize: 14 }}>👤</Text>
                           </View>
                         )}
-                        <Text style={styles.sugestaoNome}>{p.nome}</Text>
+                        <Text style={[styles.sugestaoNome, { color: cores.texto }]}>{p.nome}</Text>
                       </View>
-                      <Text style={styles.sugestaoInfo}>
+                      <Text style={[styles.sugestaoInfo, { color: cores.textoSecundario }]}>
                         {p.dataNascimento ? `🎂 ${p.dataNascimento}` : ''}
                         {p.endereco ? ` • 📍 ${p.endereco}` : ''}
                       </Text>
                       {(p.microareaProntuario || p.microarea) && (
-                        <Text style={styles.sugestaoInfo}>
+                        <Text style={[styles.sugestaoInfo, { color: cores.textoSecundario }]}>
                           🏷️ {p.microareaProntuario || p.microarea}
                         </Text>
                       )}
@@ -244,8 +245,9 @@ export default function FamiliasScreen() {
 
           {editandoFamiliaId && (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
               placeholder="Nome do responsável *"
+              placeholderTextColor={cores.textoSecundario}
               value={nomeResp}
               onChangeText={setNomeResp}
               autoCapitalize="words"
@@ -254,32 +256,36 @@ export default function FamiliasScreen() {
 
           <TextInput
             ref={enderecoRef}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
             placeholder="Endereço (rua, número) *"
+            placeholderTextColor={cores.textoSecundario}
             value={endereco}
             onChangeText={setEndereco}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
             placeholder="Bairro"
+            placeholderTextColor={cores.textoSecundario}
             value={bairro}
             onChangeText={setBairro}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
             placeholder="Microárea / Prontuário"
+            placeholderTextColor={cores.textoSecundario}
             value={microarea}
             onChangeText={setMicroarea}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: cores.card, borderColor: cores.borda, color: cores.texto }]}
             placeholder="Telefone"
+            placeholderTextColor={cores.textoSecundario}
             value={telefone}
             onChangeText={setTelefone}
             keyboardType="phone-pad"
           />
 
-          <SeletorMapa
+          <SeletorMapaLeaflet
             latitude={latitude}
             longitude={longitude}
             endereco={endereco}
@@ -290,20 +296,16 @@ export default function FamiliasScreen() {
           />
 
           <View style={styles.formActions}>
-            <TouchableOpacity
-              style={[styles.btn, styles.btnSalvar]}
+            <NeonButton
+              titulo={salvando ? 'Salvando...' : editandoFamiliaId ? '💾 Salvar' : 'Criar Família'}
+              cor="#FFFFFF"
               onPress={handleSalvarFamilia}
-              disabled={salvando}
-            >
-              <Text style={styles.btnSalvarText}>
-                {salvando ? 'Salvando...' : editandoFamiliaId ? '💾 Salvar' : 'Criar Família'}
-              </Text>
-            </TouchableOpacity>
+            />
             <TouchableOpacity
-              style={[styles.btn, styles.btnCancelar]}
+              style={[styles.btn, { backgroundColor: cores.card }]}
               onPress={resetForm}
             >
-              <Text style={styles.btnCancelarText}>Cancelar</Text>
+              <Text style={[styles.btnCancelarText, { color: cores.textoSecundario }]}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -320,11 +322,11 @@ export default function FamiliasScreen() {
         const podeAdicionar = pacientesDisponiveis.length > 0;
 
         return (
-          <View key={familia.id} style={styles.familiaCard}>
+          <View key={familia.id} style={[styles.familiaCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
             {/* Header com ações */}
-            <View style={styles.familiaHeader}>
+            <View style={[styles.familiaHeader, { borderBottomColor: cores.card }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Text style={styles.familiaNome}>👤 {familia.nomeResponsavel}</Text>
+                <Text style={[styles.familiaNome, { color: cores.texto }]}>👤 {familia.nomeResponsavel}</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TouchableOpacity
                     onPress={() => abrirEdicao(familia)}
@@ -340,23 +342,23 @@ export default function FamiliasScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              <Text style={styles.familiaInfo}>📍 {familia.endereco}{familia.bairro ? ` - ${familia.bairro}` : ''}</Text>
+              <Text style={[styles.familiaInfo, { color: cores.textoSecundario }]}>📍 {familia.endereco}{familia.bairro ? ` - ${familia.bairro}` : ''}</Text>
               {familia.microarea ? (
-                <Text style={styles.familiaInfo}>🏷️ Microárea/Prontuário: {familia.microarea}</Text>
+                <Text style={[styles.familiaInfo, { color: cores.textoSecundario }]}>🏷️ Microárea/Prontuário: {familia.microarea}</Text>
               ) : null}
               {familia.telefone ? (
-                <Text style={styles.familiaInfo}>📞 {familia.telefone}</Text>
+                <Text style={[styles.familiaInfo, { color: cores.textoSecundario }]}>📞 {familia.telefone}</Text>
               ) : null}
             </View>
 
             {/* Membros atuais */}
             {membros.length > 0 && (
-              <View style={styles.membrosLista}>
-                <Text style={styles.membrosTitle}>
+              <View style={[styles.membrosLista, { borderTopColor: cores.card }]}>
+                <Text style={[styles.membrosTitle, { color: cores.textoSecundario }]}>
                   Membros ({membros.length}):
                 </Text>
                 {membros.map(m => (
-                  <View key={m.id} style={styles.membroItem}>
+                  <View key={m.id} style={[styles.membroItem, { borderBottomColor: cores.card }]}>
                     <TouchableOpacity
                       style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
                       onPress={() => router.push({ pathname: '/(tabs)/detalhes', params: { id: m.id } })}
@@ -364,14 +366,14 @@ export default function FamiliasScreen() {
                       {m.foto ? (
                         <Image source={{ uri: m.foto }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
                       ) : (
-                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
+                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: cores.card, justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
                           <Text style={{ fontSize: 14 }}>👤</Text>
                         </View>
                       )}
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.membroNome}>{m.nome}</Text>
-                        {m.dataNascimento && <Text style={{ fontSize: 11, color: '#999' }}>🎂 {m.dataNascimento}</Text>}
-                        {(m.microareaProntuario || m.microarea) && <Text style={{ fontSize: 11, color: '#999' }}>🏷️ {m.microareaProntuario || m.microarea}</Text>}
+                        <Text style={[styles.membroNome, { color: cores.texto }]}>{m.nome}</Text>
+                        {m.dataNascimento && <Text style={{ fontSize: 11, color: cores.textoSecundario }}>🎂 {m.dataNascimento}</Text>}
+                        {(m.microareaProntuario || m.microarea) && <Text style={{ fontSize: 11, color: cores.textoSecundario }}>🏷️ {m.microareaProntuario || m.microarea}</Text>}
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -389,7 +391,7 @@ export default function FamiliasScreen() {
                         ]);
                       }}
                     >
-                      <Text style={styles.removerBtn}>✕</Text>
+                      <Text style={[styles.removerBtn, { color: '#E53935' }]}>✕</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -397,58 +399,59 @@ export default function FamiliasScreen() {
             )}
 
             {membros.length === 0 && (
-              <Text style={styles.semMembros}>Nenhum membro vinculado ainda</Text>
+              <Text style={[styles.semMembros, { color: cores.textoSecundario, borderTopColor: cores.card }]}>Nenhum membro vinculado ainda</Text>
             )}
 
             {/* Busca de membros (só pacientes disponíveis) */}
             {podeAdicionar ? (
               <>
                 <TextInput
-                  style={styles.buscaInput}
+                  style={[styles.buscaInput, { backgroundColor: cores.card, color: cores.texto }]}
                   placeholder="🔍 Adicionar paciente pelo nome..."
+                  placeholderTextColor={cores.textoSecundario}
                   value={termoBusca}
                   onChangeText={texto => handleBuscaMembroChange(familia.id, texto)}
                 />
 
                 {termoBusca.length > 0 && resultadosBusca.length > 0 && (
-                  <View style={styles.resultadosBusca}>
+                  <View style={[styles.resultadosBusca, { borderColor: cores.borda }]}>
                     {resultadosBusca.map(p => (
                       <TouchableOpacity
                         key={p.id}
-                        style={styles.pacienteItem}
+                        style={[styles.pacienteItem, { borderBottomColor: cores.card, backgroundColor: cores.card }]}
                         onPress={() => handleAdicionarMembro(familia.id, p.id)}
                       >
                         {p.foto ? (
-                          <Image source={{ uri: p.foto }} style={styles.pacienteItemFoto} />
+                          <Image source={{ uri: p.foto }} style={[styles.pacienteItemFoto, { borderColor: cores.primary }]} />
                         ) : (
-                          <View style={styles.pacienteItemFotoPlaceholder}>
+                          <View style={[styles.pacienteItemFotoPlaceholder, { backgroundColor: cores.card, borderColor: cores.borda }]}>
                             <Text style={styles.pacienteItemFotoEmoji}>👤</Text>
                           </View>
                         )}
                         <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text style={styles.pacienteItemNome}>{p.nome}</Text>
-                          <Text style={styles.pacienteItemInfo}>
+                          <Text style={[styles.pacienteItemNome, { color: cores.texto }]}>{p.nome}</Text>
+                          <Text style={[styles.pacienteItemInfo, { color: cores.textoSecundario }]}>
                             {p.dataNascimento ? `🎂 ${p.dataNascimento} • ` : ''}
                             {p.endereco ? `📍 ${p.endereco}` : ''}
                           </Text>
                           {(p.microareaProntuario || p.microarea) && (
-                            <Text style={styles.pacienteItemInfo}>
+                            <Text style={[styles.pacienteItemInfo, { color: cores.textoSecundario }]}>
                               🏷️ {p.microareaProntuario || p.microarea}
                             </Text>
                           )}
                         </View>
-                        <Text style={styles.pacienteItemAdd}>+</Text>
+                        <Text style={[styles.pacienteItemAdd, { color: cores.primary }]}>+</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 )}
 
                 {termoBusca.length > 0 && resultadosBusca.length === 0 && (
-                  <Text style={styles.semResultados}>Nenhum paciente disponível com esse nome</Text>
+                  <Text style={[styles.semResultados, { color: cores.textoSecundario }]}>Nenhum paciente disponível com esse nome</Text>
                 )}
               </>
             ) : (
-              <Text style={styles.semResultados}>
+              <Text style={[styles.semResultados, { color: cores.textoSecundario }]}>
                 ✅ Todos os pacientes já estão vinculados a alguma família
               </Text>
             )}
@@ -458,8 +461,8 @@ export default function FamiliasScreen() {
 
       {familias.length === 0 && (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Nenhuma família cadastrada</Text>
-          <Text style={styles.emptySub}>Crie a primeira família para agrupar pacientes do mesmo domicílio</Text>
+          <Text style={[styles.emptyText, { color: cores.textoSecundario }]}>Nenhuma família cadastrada</Text>
+          <Text style={[styles.emptySub, { color: cores.textoSecundario }]}>Crie a primeira família para agrupar pacientes do mesmo domicílio</Text>
         </View>
       )}
 
@@ -488,56 +491,42 @@ export default function FamiliasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     padding: 15,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FF8C00',
     textAlign: 'center',
     marginTop: 15,
   },
   subtitle: {
     fontSize: 13,
-    color: '#999',
     textAlign: 'center',
     marginBottom: 20,
   },
 
   // ─── Botão criar ─────────────────────────────────
-  btnCriar: {
-    backgroundColor: '#FF8C00',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
   btnCriarText: {
-    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
 
   // ─── Formulário ──────────────────────────────────
   formCard: {
-    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
     elevation: 2,
   },
   formTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 15,
   },
   input: {
     height: 46,
-    backgroundColor: '#F9F9F9',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     marginBottom: 12,
     paddingHorizontal: 12,
@@ -555,19 +544,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  btnSalvar: {
-    backgroundColor: '#FF8C00',
-  },
-  btnSalvarText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  btnCancelar: {
-    backgroundColor: '#F0F0F0',
-  },
   btnCancelarText: {
-    color: '#666',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -578,49 +555,46 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   sugestoesBox: {
-    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     marginTop: -8,
     marginBottom: 12,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
   },
   sugestaoItem: {
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   sugestaoNome: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
   },
   sugestaoInfo: {
     fontSize: 11,
-    color: '#999',
     marginTop: 2,
   },
 
   // ─── Card de família ─────────────────────────────
   familiaCard: {
-    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 15,
+    borderWidth: 1,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   familiaHeader: {
     marginBottom: 12,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
   },
   headerAction: {
     padding: 4,
@@ -631,26 +605,22 @@ const styles = StyleSheet.create({
   familiaNome: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: '#222',
     flex: 1,
   },
   familiaInfo: {
     fontSize: 13,
-    color: '#666',
     marginTop: 2,
   },
 
   // ─── Membros ─────────────────────────────────────
   membrosLista: {
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
     paddingTop: 10,
     marginBottom: 10,
   },
   membrosTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#999',
     marginBottom: 6,
   },
   membroItem: {
@@ -659,31 +629,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   membroNome: {
     fontSize: 14,
-    color: '#444',
   },
   removerBtn: {
-    color: '#E53935',
     fontWeight: 'bold',
     fontSize: 16,
     padding: 4,
   },
   semMembros: {
     fontSize: 12,
-    color: '#CCC',
     textAlign: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
   },
 
   // ─── Busca ───────────────────────────────────────
   buscaInput: {
     height: 40,
-    backgroundColor: '#F5F5F5',
     borderRadius: 6,
     paddingHorizontal: 12,
     fontSize: 13,
@@ -692,7 +656,6 @@ const styles = StyleSheet.create({
   resultadosBusca: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -703,48 +666,39 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    backgroundColor: '#FAFAFA',
   },
   pacienteItemFoto: {
     width: 36,
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: '#FF8C00',
   },
   pacienteItemFotoPlaceholder: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E0E0E0',
   },
   pacienteItemFotoEmoji: {
     fontSize: 16,
   },
   pacienteItemNome: {
     fontSize: 14,
-    color: '#333',
     fontWeight: '600',
   },
   pacienteItemInfo: {
     fontSize: 11,
-    color: '#999',
     marginTop: 2,
   },
   pacienteItemAdd: {
     fontSize: 22,
-    color: '#FF8C00',
     fontWeight: 'bold',
     paddingLeft: 8,
   },
   semResultados: {
     fontSize: 12,
-    color: '#CCC',
     textAlign: 'center',
     paddingVertical: 10,
   },
@@ -756,11 +710,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
   },
   emptySub: {
     fontSize: 13,
-    color: '#CCC',
     textAlign: 'center',
     marginTop: 5,
     paddingHorizontal: 30,

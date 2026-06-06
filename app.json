@@ -14,12 +14,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.saudedogueto.app",
-      "config": {
-        "googleMaps": {
-          "apiKey": ""
-        }
-      }
+      "package": "com.saudedogueto.app"
     },
     "web": {},
     "newArchEnabled": false,

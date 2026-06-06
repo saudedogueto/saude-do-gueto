@@ -27,6 +27,9 @@ type AuthContextType = {
   loginLocal: (senha: string) => Promise<boolean>;
   definirSenhaLocal: (senha: string) => Promise<boolean>;
   temSenhaLocal: boolean;
+  // Aliases usados pelas telas (index.tsx, login.tsx)
+  temSenha: boolean;
+  definirSenha: (senha: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -171,6 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginLocal,
       definirSenhaLocal,
       temSenhaLocal,
+      temSenha: temSenhaLocal,
+      definirSenha: definirSenhaLocal,
     }}>
       {children}
     </AuthContext.Provider>

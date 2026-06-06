@@ -13,28 +13,42 @@ type Cores = {
   input: string;
   primary: string;
   primaryLight: string;
+  verdeSaude: string;
+  azulNeon: string;
+  glassBg: string;
+  glassBorder: string;
 };
 
-export const coresClaro: Cores = {
-  fundo: '#FAFAFA',
+// Paleta futurista: SUS do Futuro
+// Claro = fundo claro, escuro = fundo #0B1220
+const paletaEscura: Cores = {
+  fundo: '#0B1220',
+  card: 'rgba(255, 255, 255, 0.06)',
+  texto: '#FFFFFF',
+  textoSecundario: 'rgba(255, 255, 255, 0.6)',
+  borda: 'rgba(255, 255, 255, 0.1)',
+  input: 'rgba(255, 255, 255, 0.08)',
+  primary: '#00E676',
+  primaryLight: 'rgba(0, 230, 118, 0.15)',
+  verdeSaude: '#00E676',
+  azulNeon: '#00B0FF',
+  glassBg: 'rgba(255, 255, 255, 0.05)',
+  glassBorder: 'rgba(255, 255, 255, 0.12)',
+};
+
+const paletaClara: Cores = {
+  fundo: '#F0F2F5',
   card: '#FFFFFF',
-  texto: '#222222',
-  textoSecundario: '#666666',
-  borda: '#E0E0E0',
+  texto: '#1A1A2E',
+  textoSecundario: '#4A4A6A',
+  borda: '#D0D2DE',
   input: '#FFFFFF',
-  primary: '#FF8C00',
-  primaryLight: '#FFF3E0',
-};
-
-export const coresEscuro: Cores = {
-  fundo: '#121212',
-  card: '#1E1E1E',
-  texto: '#E0E0E0',
-  textoSecundario: '#999999',
-  borda: '#333333',
-  input: '#2C2C2C',
-  primary: '#FFA726',
-  primaryLight: '#3E2723',
+  primary: '#00B860',
+  primaryLight: 'rgba(0, 184, 96, 0.1)',
+  verdeSaude: '#00B860',
+  azulNeon: '#0088E0',
+  glassBg: '#FFFFFF',
+  glassBorder: '#E0E2EC',
 };
 
 type TemaContextType = {
@@ -63,8 +77,9 @@ export function TemaProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem('@tema', novoTema);
   };
 
+  // Padrão: modo claro. Usuário pode trocar pra escuro ou sistema.
   const isEscuro = tema === 'escuro' || (tema === 'sistema' && sistema === 'dark');
-  const cores = isEscuro ? coresEscuro : coresClaro;
+  const cores = isEscuro ? paletaEscura : paletaClara;
 
   return (
     <TemaContext.Provider value={{ tema, cores, setTema, isEscuro }}>

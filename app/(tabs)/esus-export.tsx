@@ -10,6 +10,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Share
 } from 'react-native';
 import { usePacientes } from '@/src/contexts/PacienteContext';
+import { useFamilias } from '@/src/contexts/FamiliaContext';
 import { useVisitas } from '@/src/contexts/VisitaContext';
 import { useTema } from '@/src/contexts/TemaContext';
 import { router } from 'expo-router';
@@ -18,6 +19,7 @@ type Periodo = 'geral' | 'mes' | 'semana';
 
 export default function ESUSExportScreen() {
   const { pacientes, carregarPacientes } = usePacientes();
+  const { familias, carregarFamilias } = useFamilias();
   const { visitas, carregarVisitas } = useVisitas();
   const { cores } = useTema();
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
@@ -32,6 +34,7 @@ export default function ESUSExportScreen() {
 
   useEffect(() => {
     carregarPacientes();
+    carregarFamilias();
     carregarVisitas();
   }, []);
 
@@ -68,7 +71,7 @@ export default function ESUSExportScreen() {
   const gestantes = pacientes.filter(p => p.gestante).length;
 
   const visitasPorMotivo = (lista: typeof visitas, motivo: string) =>
-    lista.filter(v => v.motivo === motivo).length;
+    lista.filter(v => (v as any).motivo === motivo).length;
 
   const periodoLabel =
     periodo === 'geral' ? 'GERAL' : periodo === 'mes' ? 'ÚLTIMOS 30 DIAS' : 'ÚLTIMOS 7 DIAS';
@@ -88,6 +91,217 @@ export default function ESUSExportScreen() {
       rotina: 'Rotina', retorno: 'Retorno', queixa: 'Queixa', encaminhamento: 'Encaminhamento',
     };
     return map[m] || m;
+  };
+
+  const limparCSV = (v: any): string => {
+    if (v === null || v === undefined || v === '') return '';
+    const s = String(v).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const simNao = (v: any): string => v ? 'Sim' : 'Não';
+
+  // Helper para campos que podem não existir nos types
+  const campo = (obj: any, campo: string): any => obj && (obj as any)[campo];
+
+  // ===== Exportação SIS Online (formato e-SUS AB compatível) =====
+
+  const exportarFichaIndividual = () => {
+    // Ficha de Cadastro Individual — e-SUS AB PEC
+    const cabecalho = [
+      '=== FICHA DE CADASTRO INDIVIDUAL - SIS ONLINE ===',
+      `Exportado em: ${gerarDataHora()}`,
+      `Origem: Saúde do Gueto v3`,
+      `Formato compatível com e-SUS AB / SISS Eicon`,
+      '',
+    ].join('\n');
+
+    const cols = [
+      'Nome', 'CPF', 'CartaoSUS', 'DataNascimento', 'Idade', 'Sexo',
+      'NomeMae', 'Telefone', 'Endereco', 'Numero', 'Complemento', 'Bairro',
+      'Microarea', 'Hipertensao', 'Diabetes', 'Gestante', 'Menor2Anos',
+      'Observacoes', 'DataCadastro'
+    ].join(';');
+
+    const linhas = pacientes.map(p => {
+      const pp = p as any;
+      return [
+        limparCSV(pp.nome), limparCSV(pp.cpf), limparCSV(pp.cartaoSUS),
+        limparCSV(pp.dataNascimento), calcIdade(pp.dataNascimento || ''),
+        limparCSV(pp.sexo), limparCSV(pp.nomeMae),
+        limparCSV(pp.telefone), limparCSV(pp.endereco), limparCSV(pp.numero),
+        limparCSV(pp.complemento), limparCSV(pp.bairro), limparCSV(pp.microarea),
+        simNao(pp.hipertensao), simNao(pp.diabetes),
+        simNao(pp.gestante), simNao(pp.menorDoisAnos),
+        limparCSV(pp.observacoes), limparCSV(pp.dataCadastro),
+      ].join(';');
+    }).join('\n');
+
+    const texto = cabecalho + 'Campos;' + cols + '\n' + linhas;
+    Share.share({ message: texto, title: `Ficha_Individual_SIS_${new Date().toISOString().split('T')[0]}.csv` });
+  };
+
+  const exportarFichaDomiciliar = () => {
+    // Ficha de Cadastro Domiciliar — e-SUS AB PEC
+    const cabecalho = [
+      '=== FICHA DE CADASTRO DOMICILIAR - SIS ONLINE ===',
+      `Exportado em: ${gerarDataHora()}`,
+      '',
+    ].join('\n');
+
+    const cols = [
+      'Responsavel', 'Endereco', 'Numero', 'Complemento', 'Bairro',
+      'Microarea', 'Telefone', 'Latitude', 'Longitude',
+      'QtdMembros', 'MembrosIDs', 'DataCriacao'
+    ].join(';');
+
+    const linhas = familias.map(f => {
+      const membrosNomes = (f.membros || [])
+        .map(id => pacientes.find(p => p.id === id))
+        .filter(Boolean)
+        .map(p => p!.nome)
+        .join('; ');
+
+      return [
+        limparCSV(f.nomeResponsavel),
+        limparCSV(f.endereco),
+        limparCSV((f as any).numero),
+        limparCSV((f as any).complemento),
+        limparCSV(f.bairro),
+        limparCSV(f.microarea),
+        limparCSV(f.telefone),
+        f.latitude != null ? String(f.latitude) : '',
+        f.longitude != null ? String(f.longitude) : '',
+        String((f.membros || []).length),
+        limparCSV(membrosNomes),
+        limparCSV(f.dataCriacao),
+      ].join(';');
+    }).join('\n');
+
+    const texto = cabecalho + 'Campos;' + cols + '\n' + linhas;
+    Share.share({ message: texto, title: `Ficha_Domiciliar_SIS_${new Date().toISOString().split('T')[0]}.csv` });
+  };
+
+  const exportarFichaVisita = () => {
+    // Ficha de Visita Domiciliar — e-SUS AB PEC
+    const vFiltradas = visitasFiltradas;
+
+    const cabecalho = [
+      '=== FICHA DE VISITA DOMICILIAR - SIS ONLINE ===',
+      `Exportado em: ${gerarDataHora()}`,
+      `Periodo: ${periodoLabel}`,
+      '',
+    ].join('\n');
+
+    const cols = [
+      'Data', 'Hora', 'PacienteNome', 'PacienteCPF', 'PacienteSUS',
+      'Motivo', 'PA_Sistolica', 'PA_Diastolica', 'Glicemia',
+      'Peso', 'Altura', 'VacinaEmDia', 'Medicamentos',
+      'Observacoes', 'Encaminhamento', 'ProximaVisita', 'Realizada'
+    ].join(';');
+
+    const linhas = vFiltradas.map(v => [
+      limparCSV(v.data),
+      limparCSV((v as any).hora),
+      limparCSV((v as any).pacienteNome),
+      limparCSV((v as any).pacienteCPF),
+      limparCSV((v as any).pacienteSUS),
+      motivonome((v as any).motivo || ''),
+      limparCSV((v as any).pressaoSistolica),
+      limparCSV((v as any).pressaoDiastolica),
+      limparCSV((v as any).glicemia),
+      limparCSV((v as any).peso),
+      limparCSV((v as any).altura),
+      simNao((v as any).vacinaEmDia),
+      limparCSV((v as any).medicamentos),
+      limparCSV(v.observacoes),
+      limparCSV((v as any).encaminhamento),
+      limparCSV((v as any).proximaVisita),
+      simNao((v as any).realizada),
+    ].join(';')).join('\n');
+
+    const resumo = [
+      '', '--- RESUMO ---',
+      `Total de visitas;${vFiltradas.length}`,
+      `Pacientes visitados;${visitasFiltradas.length > 0 ? new Set(vFiltradas.map(v => (v as any).pacienteNome || v.pacienteId)).size : 0}`,
+      `Rotina;${vFiltradas.filter(v => (v as any).motivo === 'rotina').length}`,
+      `Retorno;${vFiltradas.filter(v => (v as any).motivo === 'retorno').length}`,
+      `Queixa;${vFiltradas.filter(v => (v as any).motivo === 'queixa').length}`,
+      `Encaminhamento;${vFiltradas.filter(v => (v as any).motivo === 'encaminhamento').length}`,
+    ].join('\n');
+
+    const texto = cabecalho + 'Campos;' + cols + '\n' + linhas + resumo;
+    Share.share({ message: texto, title: `Ficha_Visita_SIS_${new Date().toISOString().split('T')[0]}.csv` });
+  };
+
+  const exportarTudoSIS = () => {
+    // Exportação completa — todas as 3 fichas num único arquivo
+    const data = new Date().toISOString().split('T')[0];
+
+    const cabecalho = [
+      '=== EXPORTACAO COMPLETA SIS ONLINE ===',
+      `Exportado em: ${gerarDataHora()}`,
+      `Origem: Saude do Gueto v3`,
+      `Formato: CSV compativel com e-SUS AB / SISS Eicon`,
+      '',
+      `--- FICHA DE CADASTRO INDIVIDUAL ---`,
+      'Nome;CPF;CartaoSUS;DataNascimento;Idade;Sexo;NomeMae;Telefone;Endereco;Numero;Bairro;Microarea;Hipertensao;Diabetes;Gestante;Menor2Anos;Observacoes;DataCadastro',
+    ].join('\n');
+
+    const individuais = pacientes.map(p => {
+      const pp = p as any;
+      return [
+        limparCSV(pp.nome), limparCSV(pp.cpf), limparCSV(pp.cartaoSUS),
+        limparCSV(pp.dataNascimento), calcIdade(pp.dataNascimento || ''),
+        limparCSV(pp.sexo), limparCSV(pp.nomeMae),
+        limparCSV(pp.telefone), limparCSV(pp.endereco), limparCSV(pp.numero),
+        limparCSV(pp.bairro), limparCSV(pp.microarea),
+        simNao(pp.hipertensao), simNao(pp.diabetes),
+        simNao(pp.gestante), simNao(pp.menorDoisAnos),
+        limparCSV(pp.observacoes), limparCSV(pp.dataCadastro),
+      ].join(';');
+    }).join('\n');
+
+    const domiciliares = familias.map(f => {
+      const membrosNomes = (f.membros || [])
+        .map(id => pacientes.find(p => p.id === id))
+        .filter(Boolean).map(p => p!.nome).join('; ');
+      return [
+        limparCSV(f.nomeResponsavel), limparCSV(f.endereco),
+        limparCSV((f as any).numero), limparCSV((f as any).complemento),
+        limparCSV(f.bairro), limparCSV(f.microarea), limparCSV(f.telefone),
+        f.latitude != null ? String(f.latitude) : '',
+        f.longitude != null ? String(f.longitude) : '',
+        String((f.membros || []).length), limparCSV(membrosNomes),
+        limparCSV(f.dataCriacao),
+      ].join(';');
+    }).join('\n');
+
+    const vFiltradas = visitasFiltradas;
+    const visitasCSV = vFiltradas.map(v => [
+      limparCSV(v.data), limparCSV((v as any).hora),
+      limparCSV((v as any).pacienteNome), limparCSV((v as any).pacienteCPF),
+      limparCSV((v as any).motivo), limparCSV((v as any).pressaoSistolica),
+      limparCSV((v as any).pressaoDiastolica), limparCSV((v as any).glicemia),
+      limparCSV((v as any).peso), limparCSV((v as any).altura),
+      simNao((v as any).vacinaEmDia), limparCSV(v.observacoes),
+      limparCSV((v as any).encaminhamento), limparCSV((v as any).proximaVisita),
+    ].join(';')).join('\n');
+
+    const texto = [
+      cabecalho,
+      individuais,
+      '',
+      `--- FICHA DE CADASTRO DOMICILIAR ---`,
+      'Responsavel;Endereco;Numero;Complemento;Bairro;Microarea;Telefone;Latitude;Longitude;QtdMembros;Membros;DataCriacao',
+      domiciliares,
+      '',
+      `--- FICHA DE VISITA DOMICILIAR ---`,
+      'Data;Hora;Paciente;CPF;Motivo;PA_Sist;PA_Diast;Glicemia;Peso;Altura;Vacinas;Observacoes;Encaminhamento;ProxVisita',
+      visitasCSV,
+    ].join('\n');
+
+    Share.share({ message: texto, title: `SIS_Online_Completo_${data}.csv` });
   };
 
   const exportarRelatorioTexto = () => {
@@ -290,12 +504,32 @@ export default function ESUSExportScreen() {
         <View style={styles.sisRow}><Text style={styles.sisLabel}>Encaminhamentos:</Text><Text style={styles.sisValor}>{visitasPorMotivo(visitasDoMes, 'encaminhamento')}</Text></View>
       </View>
 
-      {/* Botões e-SUS */}
-      <TouchableOpacity style={styles.btnPrimary} onPress={exportarRelatorioTexto}>
-        <Text style={styles.btnText}>📄 Relatório de Produção (Texto)</Text>
+      {/* Botões de exportação SIS Online */}
+      <Text style={styles.sectionTitle}>📤 Exportar para SIS Online</Text>
+      <Text style={styles.exportInfo}>
+        Gera arquivo CSV compatível com e-SUS AB para importar no SIS Online (SISS Eicon) de Guarulhos.
+        Compartilhe o arquivo por email ou salve no celular e faça upload no portal da prefeitura.
+      </Text>
+
+      <TouchableOpacity style={styles.btnPrimary} onPress={exportarFichaIndividual}>
+        <Text style={styles.btnText}>👤 Cadastro Individual (pacientes)</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.btnSecondary} onPress={exportarCSV_esus}>
-        <Text style={styles.btnSecondaryText}>📊 CSV para SIS Online</Text>
+      <TouchableOpacity style={styles.btnPrimary} onPress={exportarFichaDomiciliar}>
+        <Text style={styles.btnText}>🏠 Cadastro Domiciliar (famílias)</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.btnPrimary} onPress={exportarFichaVisita}>
+        <Text style={styles.btnText}>🚪 Visita Domiciliar</Text>
+      </TouchableOpacity>
+
+      <View style={styles.divisor} />
+
+      <TouchableOpacity style={styles.sisExportBtn} onPress={exportarTudoSIS}>
+        <Text style={styles.sisExportBtnText}>📦 EXPORTAR TUDO PRA SIS ONLINE</Text>
+        <Text style={styles.sisExportBtnSub}>Gera CSV com todas as fichas num arquivo só</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.btnSecondary} onPress={exportarRelatorioTexto}>
+        <Text style={styles.btnSecondaryText}>📄 Relatório de Produção (Texto)</Text>
       </TouchableOpacity>
     </>
   );
@@ -665,5 +899,28 @@ const styles = StyleSheet.create({
     color: '#AAA',
     textAlign: 'center',
     marginBottom: 10,
+  },
+  sisExportBtn: {
+    backgroundColor: '#1A73E8',
+    height: 54,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 4,
+    shadowColor: '#1A73E8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  sisExportBtnText: {
+    color: '#FFF',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  sisExportBtnSub: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    marginTop: 2,
   },
 });

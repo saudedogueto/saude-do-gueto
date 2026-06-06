@@ -4,12 +4,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type Visita = {
   id: string;
   pacienteId: string;
+  pacienteNome?: string;
+  pacienteCPF?: string;
+  pacienteSUS?: string;
   data: string;
+  hora?: string;
+  motivo?: string;
+  tipo?: string;
   pressaoSistolica?: string;
   pressaoDiastolica?: string;
   glicemia?: string;
+  peso?: string;
+  altura?: string;
+  vacinaEmDia?: boolean;
   medicamentos?: string;
   observacoes?: string;
+  encaminhamento?: string;
+  proximaVisita?: string;
+  realizada: boolean;
 };
 
 type VisitaContextType = {
@@ -17,6 +29,7 @@ type VisitaContextType = {
   carregarVisitas: () => Promise<void>;
   salvarVisita: (visita: Omit<Visita, 'id'>) => Promise<void>;
   visitasPorPaciente: (pacienteId: string) => Visita[];
+  excluirVisita: (id: string) => Promise<void>;
 };
 
 const VisitaContext = createContext<VisitaContextType>({} as VisitaContextType);
@@ -53,9 +66,22 @@ export function VisitaProvider({ children }: { children: React.ReactNode }) {
       .sort((a, b) => b.data.localeCompare(a.data));
   };
 
+  const excluirVisita = useCallback(async (id: string) => {
+    try {
+      const dados = await AsyncStorage.getItem('@visitas');
+      if (!dados) return;
+      const lista: Visita[] = JSON.parse(dados).filter((v: Visita) => v.id !== id);
+      await AsyncStorage.setItem('@visitas', JSON.stringify(lista));
+      setVisitas(lista);
+    } catch (error) {
+      console.error('Erro ao excluir visita:', error);
+      throw error;
+    }
+  }, []);
+
   return (
     <VisitaContext.Provider value={{
-      visitas, carregarVisitas, salvarVisita, visitasPorPaciente
+      visitas, carregarVisitas, salvarVisita, visitasPorPaciente, excluirVisita
     }}>
       {children}
     </VisitaContext.Provider>

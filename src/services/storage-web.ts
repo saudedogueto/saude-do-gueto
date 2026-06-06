@@ -123,7 +123,7 @@ export function getWebDb(): { execAsync: Function; runAsync: Function; getAllAsy
 
       return rows;
     },
-    getFirstAsync: async (sql: string, params?: any[]) => {
+    getFirstAsync: async function(this: any, sql: string, params?: any[]) {
       const rows = await this.getAllAsync(sql, params);
       return rows[0] || null;
     },
