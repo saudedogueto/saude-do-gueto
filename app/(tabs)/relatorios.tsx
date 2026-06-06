@@ -215,7 +215,7 @@ export default function RelatoriosScreen() {
     <ScrollView style={[styles.container, { backgroundColor: cores.fundo }]}>
       <Text style={[styles.title, { color: cores.primary }]}>Relatorios</Text>
 
-      {/* Botoes: Geral | Historico de Visitas */}
+      {/* Botoes: Geral | Historico de Visitas | Exportar e-SUS */}
       <View style={styles.abaRow}>
         <TouchableOpacity
           style={[styles.abaBtn, styles.abaAtiva]}
@@ -224,10 +224,16 @@ export default function RelatoriosScreen() {
           <Text style={[styles.abaText, styles.abaTextAtiva]}>Geral</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.abaBtnHistorico]}
+          style={[styles.abaBtnSec]}
           onPress={() => router.push('/(tabs)/historico-visitas')}
         >
-          <Text style={styles.abaTextHistorico}>Historico de Visitas</Text>
+          <Text style={styles.abaTextSec}>Historico de Visitas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.abaBtnSec]}
+          onPress={() => router.push('/(tabs)/esus-export')}
+        >
+          <Text style={styles.abaTextSec}>Exportar</Text>
         </TouchableOpacity>
       </View>
 
@@ -339,8 +345,8 @@ const styles = StyleSheet.create({
   abaAtiva: { backgroundColor: '#00E676' },
   abaText: { fontSize: 15, fontWeight: '600', color: '#0B1220' },
   abaTextAtiva: { color: '#0B1220' },
-  abaBtnHistorico: { flex: 1, paddingVertical: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: '#00E676', borderRadius: 10, alignItems: 'center' },
-  abaTextHistorico: { fontSize: 15, fontWeight: '600', color: '#00E676' },
+  abaBtnSec: { flex: 1, paddingVertical: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: '#00E676', borderRadius: 10, alignItems: 'center' },
+  abaTextSec: { fontSize: 15, fontWeight: '600', color: '#00E676' },
   periodoRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   periodoBtn: { flex: 1, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, alignItems: 'center' },
   periodoAtivo: { backgroundColor: '#00E676', borderColor: '#00E676' },
