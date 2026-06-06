@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useCallback } from 'react';
+﻿import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
   Alert, Switch, ScrollView, TouchableOpacity, Platform, Keyboard,
@@ -75,6 +75,19 @@ export default function CadastroScreen() {
 
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [scrollHabilitado, setScrollHabilitado] = useState(true);
+
+  // Trava o scroll do ScrollView quando o teclado abre pra evitar conflito
+  // com o scroll automático do navegador que já leva o input focado pra viewport.
+  useEffect(() => {
+    const onShow = () => setScrollHabilitado(false);
+    const onHide = () => setScrollHabilitado(true);
+    const subs = [
+      Keyboard.addListener('keyboardDidShow', onShow),
+      Keyboard.addListener('keyboardDidHide', onHide),
+    ];
+    return () => subs.forEach(s => s.remove());
+  }, []);
   const { showToast } = useToast();
   const criarPacienteStore = usePacienteStore(s => s.criar);
 
@@ -206,10 +219,11 @@ export default function CadastroScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={true}
         bounces={false}
         overScrollMode="always"
-        scrollEnabled={true}
+        scrollEnabled={scrollHabilitado}
         nestedScrollEnabled={true}
       >
         <Text style={[styles.sectionTitle, { color: cores.primary, textAlign: 'center', fontSize: 20, marginBottom: 20 }]}>
