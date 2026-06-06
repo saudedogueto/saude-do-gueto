@@ -212,12 +212,19 @@ export default function CadastroScreen() {
 
 
 
+  // No web, behavior='height' no KeyboardAvoidingView costuma funcionar melhor
+  const kbBehavior = Platform.OS === 'web' ? 'height' : 'padding';
+
   return (
-    <View style={{ flex: 1, backgroundColor: cores.fundo }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: cores.fundo }}
+      behavior={kbBehavior}
+      keyboardVerticalOffset={Platform.OS === 'web' ? 0 : 90}
+    >
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { flexGrow: 1 }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={true}
@@ -523,7 +530,7 @@ export default function CadastroScreen() {
 
         <View style={{ height: 120 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
