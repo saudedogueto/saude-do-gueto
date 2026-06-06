@@ -1,7 +1,7 @@
 ﻿import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
-  Alert, Switch, ScrollView, TouchableOpacity, Platform, Keyboard,
+  Alert, Switch, ScrollView, TouchableOpacity, Platform, Keyboard, KeyboardAvoidingView,
   Image, ActivityIndicator
 } from 'react-native';
 import { usePacientes } from '@/src/contexts/PacienteContext';
