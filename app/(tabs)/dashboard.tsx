@@ -17,7 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { usePacienteStore } from '@/src/store/pacienteStore';
+import { usePacientes } from '@/src/contexts/PacienteContext';
 import { useFamiliaStore } from '@/src/store/familiaStore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTema } from '@/src/contexts/TemaContext';
@@ -35,9 +35,7 @@ interface BotaoAcao {
 }
 
 export default function DashboardScreen() {
-  const pacientes = usePacienteStore(s => s.pacientes);
-  const carregarPacientes = usePacienteStore(s => s.carregar);
-  const carregandoPacientes = usePacienteStore(s => s.carregando);
+  const { pacientes, carregarPacientes } = usePacientes();
   const familias = useFamiliaStore(s => s.familias);
   const carregarFamilias = useFamiliaStore(s => s.carregar);
   const carregandoFamilias = useFamiliaStore(s => s.carregando);
@@ -72,7 +70,7 @@ export default function DashboardScreen() {
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
   const nomeExibido = usuario?.nome || 'Agente';
 
-  const carregando = carregandoPacientes || carregandoFamilias;
+  const carregando = carregandoFamilias;
 
   // Pares lado a lado na ordem solicitada
   const paresBotoes: [BotaoAcao, BotaoAcao][] = [

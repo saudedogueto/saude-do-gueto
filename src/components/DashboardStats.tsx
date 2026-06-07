@@ -7,7 +7,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFamiliaStore } from '../store/familiaStore';
-import { usePacienteStore } from '../store/pacienteStore';
+import { usePacientes } from '../contexts/PacienteContext';
 
 interface StatCardProps {
   icone: string;
@@ -30,7 +30,7 @@ function StatCard({ icone, valor, label, cor }: StatCardProps) {
 
 export function DashboardStats() {
   const familias = useFamiliaStore(s => s.familias);
-  const pacientes = usePacienteStore(s => s.pacientes);
+  const { pacientes } = usePacientes();
 
   const gestantes = pacientes.filter(p => (p as any).gestante).length;
   const areasRisco = familias.filter(f => (f as any).areaRisco).length;
