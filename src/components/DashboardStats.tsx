@@ -37,9 +37,9 @@ export function DashboardStats() {
 
   return (
     <View style={styles.grid}>
-      <StatCard icone="🤰" valor={gestantes} label="Gestantes" cor="#0088E0" />
+      <StatCard icone="👥" valor={pacientes.length} label="Total de Pacientes" cor="#00B860" />
       <View style={styles.col}>
-        <StatCard icone="👨‍👩‍👧‍👦" valor={familias.length} label="Famílias" cor="#00B860" />
+        <StatCard icone="👨‍👩‍👧‍👦" valor={familias.length} label="Famílias" cor="#0088E0" />
         <StatCard icone="⚠️" valor={areasRisco} label="Áreas de risco" cor="#E05050" />
       </View>
     </View>
