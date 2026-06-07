@@ -87,9 +87,25 @@ export default function AgenteScreen() {
     setCarregando(true);
 
     try {
+      // Monta contexto territorial real para o agente
+      const alertasTerritorio: string[] = [];
+      if (stats.hipertensos > 0) alertasTerritorio.push(`${stats.hipertensos} hipertenso(s) cadastrado(s)`);
+      if (stats.diabeticos > 0) alertasTerritorio.push(`${stats.diabeticos} diabético(s) cadastrado(s)`);
+      if (stats.gestantes > 0) alertasTerritorio.push(`${stats.gestantes} gestante(s) cadastrada(s)`);
+      if (stats.menorDoisAnos > 0) alertasTerritorio.push(`${stats.menorDoisAnos} criança(s) <2 anos`);
+
       const params: PromptParams = {
         tipo: 'pergunta_livre',
         perguntaLivre: texto,
+        alertas: alertasTerritorio,
+        territorio: {
+          microareas: [{
+            nome: 'Território do ACS',
+            totalFamilias: stats.totalFamilias,
+            familiasSemVisita60: 0,
+            familiasSemVisita90: 0,
+          }],
+        },
       };
 
       const resposta = await executarPrompt(params);

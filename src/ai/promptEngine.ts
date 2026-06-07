@@ -30,7 +30,7 @@ export function montarPrompt(params: PromptParams): string {
     case 'analise_territorio':
       return montarPromptAnaliseTerritorio(params.territorio);
     case 'pergunta_livre':
-      return montarPromptPerguntaLivre(params.perguntaLivre, params.familia);
+      return montarPromptPerguntaLivre(params.perguntaLivre, params.familia, params.alertas, params.territorio);
     default:
       return '';
   }
@@ -175,32 +175,54 @@ function montarPromptAnaliseTerritorio(territorio?: ContextoTerritorio): string 
 
 function montarPromptPerguntaLivre(
   pergunta?: string,
-  familia?: ContextoFamilia
+  familia?: ContextoFamilia,
+  alertas?: string[],
+  territorio?: ContextoTerritorio
 ): string {
   if (!pergunta) return '';
 
-  const contextoFamilia = familia
-    ? `\n\n## CONTEXTO DA FAMÍLIA ATUAL\nNome: ${familia.nome}\nMembros: ${familia.pacientes.length}\nDias sem visita: ${familia.diasSemVisita}\nCondições: ${familia.pacientes
-        .filter((p) => p.hipertenso || p.diabetico || p.gestante)
-        .map((p) => p.nome)
-        .join(', ') || 'N/A'}`
-    : '';
-
-  return [
+  const partes: string[] = [
     `Você é um assistente de APS (Atenção Primária à Saúde).`,
     `Responda APENAS com base nos dados disponíveis e em protocolos oficiais do SUS.`,
-    contextoFamilia,
-    ``,
-    `## PERGUNTA DO ACS`,
-    pergunta,
-    ``,
-    `## INSTRUÇÕES`,
-    `1. Responda de forma clara, direta e acionável.`,
-    `2. Se a pergunta exigir diagnóstico, diga "Isso requer avaliação médica. Recomendo encaminhamento à UBS."`,
-    `3. Se não souber a resposta, diga "Não tenho dados suficientes para responder. Consulte a UBS."`,
-    `4. Cite o protocolo ou dado que baseou a resposta.`,
-    `5. NUNCA prescreva medicamentos. NUNCA diagnostique.`,
-  ].join('\n');
+    '',
+  ];
+
+  // Contexto do território (dados reais do app)
+  if (territorio && territorio.microareas.length > 0) {
+    const area = territorio.microareas[0];
+    partes.push(`## PANORAMA DO TERRITÓRIO`);
+    partes.push(`Famílias cadastradas: ${area.totalFamilias}`);
+    if (alertas && alertas.length > 0) {
+      partes.push(`Condições especiais no território:`);
+      alertas.forEach(a => partes.push(`- ${a}`));
+    }
+    partes.push('');
+  }
+
+  if (familia) {
+    partes.push(`## CONTEXTO DA FAMÍLIA ATUAL`);
+    partes.push(`Nome: ${familia.nome}`);
+    partes.push(`Membros: ${familia.pacientes.length}`);
+    partes.push(`Dias sem visita: ${familia.diasSemVisita}`);
+    const condicoes = familia.pacientes
+      .filter((p) => p.hipertenso || p.diabetico || p.gestante)
+      .map((p) => p.nome)
+      .join(', ') || 'N/A';
+    partes.push(`Condições: ${condicoes}`);
+    partes.push('');
+  }
+
+  partes.push(`## PERGUNTA DO ACS`);
+  partes.push(pergunta);
+  partes.push('');
+  partes.push(`## INSTRUÇÕES`);
+  partes.push(`1. Responda de forma clara, direta e acionável.`);
+  partes.push(`2. Se a pergunta exigir diagnóstico, diga "Isso requer avaliação médica. Recomendo encaminhamento à UBS."`);
+  partes.push(`3. Se não souber a resposta, diga "Não tenho dados suficientes para responder. Consulte a UBS."`);
+  partes.push(`4. Use os dados do território acima para contextualizar sua resposta.`);
+  partes.push(`5. NUNCA prescreva medicamentos. NUNCA diagnostique.`);
+
+  return partes.join('\n');
 }
 
 // ========== Utilitários ==========
