@@ -94,6 +94,8 @@ export default function DashboardScreen() {
     ],
   ];
 
+  const gestantes = pacientes.filter(p => (p as any).gestante).length;
+
   const botoesSecundarios: BotaoAcao[] = [
     { titulo: 'CONFIG', icone: '⚙️', cor: '#FFFFFF', rota: () => router.push('/(tabs)/config') },
   ];
@@ -182,9 +184,9 @@ export default function DashboardScreen() {
               </View>
               <View style={[styles.condItem, { backgroundColor: cores.card, borderColor: cores.borda }]}>
                 <Text style={[styles.condValor, { color: cores.texto }]}>
-                  {familias.length}
+                  {gestantes}
                 </Text>
-                <Text style={[styles.condLabel, { color: cores.textoSecundario }]}>Famílias</Text>
+                <Text style={[styles.condLabel, { color: cores.textoSecundario }]}>Gestantes</Text>
               </View>
             </View>
 
