@@ -92,7 +92,29 @@ export default function DashboardScreen() {
     ],
   ];
 
+  // Calcula alertas proativos baseados nos dados reais
   const gestantes = pacientes.filter(p => (p as any).gestante).length;
+  const hipertensos = pacientes.filter(p => (p as any).hipertensao).length;
+  const diabeticos = pacientes.filter(p => (p as any).diabetes).length;
+  const menorDoisAnos = pacientes.filter(p => (p as any).menorDoisAnos).length;
+
+  const alertas: { nivel: '🔴' | '🟠' | '🟡' | '🟢'; texto: string }[] = [];
+
+  if (gestantes > 0) {
+    alertas.push({ nivel: '🟠', texto: `${gestantes} gestante${gestantes !== 1 ? 's' : ''} cadastrada${gestantes !== 1 ? 's' : ''}. Verifique acompanhamento pré-natal.` });
+  }
+  if (hipertensos > 0) {
+    alertas.push({ nivel: '🟠', texto: `${hipertensos} hipertenso${hipertensos !== 1 ? 's' : ''}. Priorize aferição de PA nas próximas visitas.` });
+  }
+  if (diabeticos > 0) {
+    alertas.push({ nivel: '🟡', texto: `${diabeticos} diabético${diabeticos !== 1 ? 's' : ''}. Verifique controle glicêmico.` });
+  }
+  if (menorDoisAnos > 0) {
+    alertas.push({ nivel: '🟡', texto: `${menorDoisAnos} criança${menorDoisAnos !== 1 ? 's' : ''} <2 anos. Confira vacinação em dia.` });
+  }
+  if (hipertensos === 0 && diabeticos === 0 && gestantes === 0 && menorDoisAnos === 0 && pacientes.length > 0) {
+    alertas.push({ nivel: '🟢', texto: 'Nenhuma condição especial registrada nos pacientes.' });
+  }
 
   const botoesSecundarios: BotaoAcao[] = [
     { titulo: 'CONFIG', icone: '⚙️', cor: '#FFFFFF', rota: () => router.push('/(tabs)/config') },
@@ -159,6 +181,18 @@ export default function DashboardScreen() {
           <>
             {/* Cards Inteligentes */}
             <DashboardStats />
+
+            {/* Alertas proativos baseados nos dados */}
+            {alertas.length > 0 && (
+              <View style={styles.alertasContainer}>
+                {alertas.map((alerta, i) => (
+                  <View key={i} style={[styles.alertaCard, { backgroundColor: cores.card, borderColor: cores.borda }]}>
+                    <Text style={styles.alertaIcone}>{alerta.nivel}</Text>
+                    <Text style={[styles.alertaTexto, { color: cores.texto }]}>{alerta.texto}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* Mini grid de condições */}
             <View style={styles.condGrid}>
@@ -396,5 +430,29 @@ const styles = StyleSheet.create({
     color: 'rgba(224, 80, 80, 0.7)',
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  // Alertas proativos
+  alertasContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 8,
+  },
+  alertaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  alertaIcone: {
+    fontSize: 18,
+  },
+  alertaTexto: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
