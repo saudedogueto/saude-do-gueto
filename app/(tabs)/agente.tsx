@@ -5,7 +5,7 @@
  * Mantém toda a funcionalidade original.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,12 +19,15 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { ChatBubble } from '../../src/components/Agente/ChatBubble';
 import { AlertCard } from '../../src/components/Agente/AlertCard';
 import { ModelStatus } from '../../src/components/Agente/ModelStatus';
 import { useAgenteStore } from '../../src/store/agenteStore';
+import { usePacientes } from '../../src/contexts/PacienteContext';
+import { useFamilias } from '../../src/contexts/FamiliaContext';
 import { executarPrompt } from '../../src/ai/executor';
 import { montarPrompt } from '../../src/ai/promptEngine';
 import { avaliarFamilia, priorizarVisitas } from '../../src/ai/regras';
@@ -39,10 +42,30 @@ import { GlassCard } from '../../src/components/GlassCard';
 
 export default function AgenteScreen() {
   const { modelo, mensagens, adicionarMensagem, limparChat, setModelo } = useAgenteStore();
+  const { pacientes, carregarPacientes } = usePacientes();
+  const { familias, carregarFamilias } = useFamilias();
   const [input, setInput] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [showMissao, setShowMissao] = useState(true);
   const flatListRef = useRef<FlatList>(null);
+
+  // Carrega dados reais ao abrir a tela
+  useFocusEffect(
+    useCallback(() => {
+      carregarPacientes();
+      carregarFamilias();
+    }, [])
+  );
+
+  // Calcula indicadores reais dos dados cadastrados
+  const stats = useMemo(() => ({
+    totalPacientes: pacientes.length,
+    totalFamilias: familias.length,
+    hipertensos: pacientes.filter(p => (p as any).hipertensao).length,
+    diabeticos: pacientes.filter(p => (p as any).diabetes).length,
+    gestantes: pacientes.filter(p => (p as any).gestante).length,
+    menorDoisAnos: pacientes.filter(p => (p as any).menorDoisAnos).length,
+  }), [pacientes, familias]);
 
   // Scroll automático ao final
   useEffect(() => {
@@ -104,17 +127,46 @@ export default function AgenteScreen() {
         <View style={styles.missaoDivider} />
 
         <Text style={styles.missaoTexto}>
-          Olá, agente.
+          Olá, agente. 🫡
         </Text>
-        <Text style={styles.missaoTexto}>
-          Tenho {Math.floor(Math.random() * 5 + 8)} famílias para acompanhamento hoje.
-        </Text>
-        <Text style={styles.missaoTexto}>
-          2 gestantes precisam de visita.
-        </Text>
-        <Text style={styles.missaoTexto}>
-          1 hipertenso está há 45 dias sem acompanhamento.
-        </Text>
+
+        {stats.totalFamilias > 0 ? (
+          <>
+            <Text style={styles.missaoTexto}>
+              Tenho <Text style={styles.missaoDestaque}>{stats.totalFamilias}</Text> família{stats.totalFamilias !== 1 ? 's' : ''} cadastrada{stats.totalFamilias !== 1 ? 's' : ''} para acompanhamento.
+            </Text>
+            <Text style={styles.missaoTexto}>
+              <Text style={styles.missaoDestaque}>{stats.totalPacientes}</Text> paciente{stats.totalPacientes !== 1 ? 's' : ''} no total.
+            </Text>
+
+            <View style={styles.missaoIndicadores}>
+              {stats.hipertensos > 0 && (
+                <Text style={styles.missaoTag}>
+                  🔴 {stats.hipertensos} hipertenso{stats.hipertensos !== 1 ? 's' : ''}
+                </Text>
+              )}
+              {stats.diabeticos > 0 && (
+                <Text style={styles.missaoTag}>
+                  🔵 {stats.diabeticos} diabético{stats.diabeticos !== 1 ? 's' : ''}
+                </Text>
+              )}
+              {stats.gestantes > 0 && (
+                <Text style={styles.missaoTag}>
+                  🤰 {stats.gestantes} gestante{stats.gestantes !== 1 ? 's' : ''}
+                </Text>
+              )}
+              {stats.menorDoisAnos > 0 && (
+                <Text style={styles.missaoTag}>
+                  👶 {stats.menorDoisAnos} criança{stats.menorDoisAnos !== 1 ? 's' : ''} <2 anos
+                </Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={styles.missaoTexto}>
+            Ainda não há dados cadastrados. Cadastre famílias e pacientes para começar a receber insights.
+          </Text>
+        )}
 
         <View style={styles.missaoFooter}>
           <NeonButton
@@ -397,5 +449,28 @@ const styles = StyleSheet.create({
     color: '#0B1220',
     fontSize: 18,
     fontWeight: '800',
+  },
+
+  // Missão - indicadores
+  missaoDestaque: {
+    color: '#00E676',
+    fontWeight: '700',
+  },
+  missaoIndicadores: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  missaoTag: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 13,
+    fontWeight: '600',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
 });
