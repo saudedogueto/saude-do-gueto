@@ -157,7 +157,7 @@ export default function AgenteScreen() {
               )}
               {stats.menorDoisAnos > 0 && (
                 <Text style={styles.missaoTag}>
-                  👶 {stats.menorDoisAnos} criança{stats.menorDoisAnos !== 1 ? 's' : ''} <2 anos
+                  👶 {stats.menorDoisAnos} criança{stats.menorDoisAnos !== 1 ? 's' : ''} {'<'}2 anos
                 </Text>
               )}
             </View>
