@@ -138,6 +138,7 @@ export default function DetalhesScreen() {
           ['Data de Nasc.', paciente.dataNascimento || '---'],
           ['Telefone', paciente.telefone || '---'],
           ['Endereço', paciente.endereco || '---'],
+          ['Bairro', paciente.bairro || '---'],
           ['Microárea / Prontuário', paciente.microareaProntuario || paciente.microarea || '---'],
           ['Cadastrado em', paciente.dataCadastro],
           ['Última visita', paciente.ultimaVisita || 'Nenhuma'],

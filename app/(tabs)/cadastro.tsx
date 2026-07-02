@@ -53,7 +53,7 @@ export default function CadastroScreen() {
   const [telefone, setTelefone] = useState(p?.telefone || '');
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState(p?.endereco || '');
-  const [bairro, setBairro] = useState('');
+  const [bairro, setBairro] = useState(p?.bairro || '');
   const [hipertensao, setHipertensao] = useState(p?.hipertensao || false);
   const [diabetes, setDiabetes] = useState(p?.diabetes || false);
   const [gestante, setGestante] = useState(p?.gestante || false);
@@ -106,7 +106,7 @@ export default function CadastroScreen() {
       const result = await buscarCEP(mascarado);
       if (result) {
         setEndereco(result.logradouro ? `${result.logradouro}, ` : '');
-        setBairro(result.bairro);
+        setBairro(result.bairro || '');
       } else {
         Alert.alert('CEP não encontrado', 'Verifique o número digitado.');
       }
@@ -173,7 +173,6 @@ export default function CadastroScreen() {
     }
     setSalvando(true);
     try {
-      const enderecoCompleto = [endereco, bairro].filter(Boolean).join(' - ');
       await salvarPaciente({
         id: editando ? (params.id as string) : undefined,
         nome: nome.trim(),
@@ -181,7 +180,8 @@ export default function CadastroScreen() {
         dataNascimento,
         cartaoSUS: cartaoSUS.trim(),
         telefone: telefone.trim(),
-        endereco: enderecoCompleto || endereco.trim(),
+        endereco: endereco.trim(),
+        bairro: bairro.trim(),
         microareaProntuario: microareaProntuario.trim(),
         hipertensao,
         diabetes,

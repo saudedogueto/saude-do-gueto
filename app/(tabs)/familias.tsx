@@ -86,7 +86,7 @@ export default function FamiliasScreen() {
     // Preenche TODOS os campos com os dados do paciente
     const micro = paciente.microareaProntuario || paciente.microarea || '';
     setEndereco(paciente.endereco || '');
-    setBairro('');
+    setBairro(paciente.bairro || '');
     setMicroarea(micro);
     setTelefone(paciente.telefone || '');
     enderecoRef.current?.focus();
