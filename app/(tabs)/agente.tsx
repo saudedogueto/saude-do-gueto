@@ -15,7 +15,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,14 +23,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { ChatBubble } from '../../src/components/Agente/ChatBubble';
 import { AlertCard } from '../../src/components/Agente/AlertCard';
-import { ModelStatus } from '../../src/components/Agente/ModelStatus';
+
 import { useAgenteStore } from '../../src/store/agenteStore';
 import { usePacientes } from '../../src/contexts/PacienteContext';
 import { useFamilias } from '../../src/contexts/FamiliaContext';
 import { executarPrompt } from '../../src/ai/executor';
 import { montarPrompt } from '../../src/ai/promptEngine';
 import { avaliarFamilia, priorizarVisitas } from '../../src/ai/regras';
-import { baixarModelo, verificarModeloLocal } from '../../src/services/modelDownload';
+
 import {
   PromptParams,
   ContextoFamilia,
@@ -41,7 +40,7 @@ import { NeonButton } from '../../src/components/NeonButton';
 import { GlassCard } from '../../src/components/GlassCard';
 
 export default function AgenteScreen() {
-  const { modelo, mensagens, adicionarMensagem, limparChat, setModelo } = useAgenteStore();
+  const { mensagens, adicionarMensagem, limparChat } = useAgenteStore();
   const { pacientes, carregarPacientes } = usePacientes();
   const { familias, carregarFamilias } = useFamilias();
   const [input, setInput] = useState('');
@@ -219,25 +218,7 @@ export default function AgenteScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Status do modelo */}
-        <ModelStatus
-          modelo={modelo}
-          onBaixar={() => Alert.alert(
-            'Baixar Modelo',
-            'O download do modelo de IA requer WiFi e aproximadamente 700MB. Deseja continuar?',
-            [
-              { text: 'Cancelar', style: 'cancel' },
-              {
-                text: 'Baixar',
-                onPress: async () => {
-                  await baixarModelo((progresso) => {
-                    setModelo({ progresso });
-                  });
-                },
-              },
-            ]
-          )}
-        />
+
 
         {/* Mensagem do dia ou Chat */}
         {showMissao && mensagens.length === 0 ? (
