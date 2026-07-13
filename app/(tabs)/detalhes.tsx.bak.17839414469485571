@@ -173,8 +173,6 @@ export default function DetalhesScreen() {
           <Text style={[styles.obs, { color: cores.texto }]}>{paciente.observacoes}</Text>
         </View>
       ) : null}
-
-      <NeonButton titulo="✏️ Editar Paciente" onPress={() => router.push(`/(tabs)/cadastro?id=${paciente.id}`)} fullWidth />
     </>
   );
 
