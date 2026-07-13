@@ -199,7 +199,7 @@ export default function CadastroScreen() {
         vacinacaoDia: menorDoisAnos ? vacinacaoDia : false,
         aleitamentoBebe: menorDoisAnos ? aleitamentoBebe : undefined,
         // Puerpério começa false no cadastro
-        puerperio: false,
+        puerperio: editando ? (p?.puerperio || false) : false,
       });
       showToast(editando ? 'Paciente atualizado com sucesso!' : 'Paciente cadastrado com sucesso!');
       setTimeout(() => router.back(), 800);
