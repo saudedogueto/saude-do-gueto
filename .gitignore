@@ -43,3 +43,6 @@ app-example
 # Firebase
 firebase-debug.log
 .wrangler/
+# Temp / backup
+*.bak
+_*.txt
